@@ -34,6 +34,7 @@ int main (int argc, char** argv) {
   MPI_Comm W_COMM = MPI_COMM_WORLD;
   if (size > N/2-1) {
     size = N/2-1;
+    printf("using only %d process\n", size);
     int i; int ranks[size]; for (i=0;i<size;i++) ranks[i]=i;
     MPI_Group O_Group, W_Group;
     MPI_Comm_group(MPI_COMM_WORLD, &O_Group);
