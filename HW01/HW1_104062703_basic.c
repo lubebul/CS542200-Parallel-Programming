@@ -23,18 +23,17 @@ int main (int argc, char** argv) {
   MPI_File fin, fout;
   // dealing with I/Os
   assert(("Usage: ./HW_104062703_basic N in-file out-file\n") && argc == 4);
-  MPI_File_open(MPI_COMM_WORLD, argv[2], MPI_MODE_RDWR, MPI_INFO_NULL, &fin);
-  MPI_File_open(MPI_COMM_WORLD, argv[3], MPI_MODE_RDWR, MPI_INFO_NULL, &fout);
+  MPI_File_open(MPI_COMM_WORLD, argv[2], MPI_MODE_RDONLY, MPI_INFO_NULL, &fin);
+  MPI_File_open(MPI_COMM_WORLD, argv[3], MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fout);
   // read number array
   int N = atoi(argv[1]); int *nums = malloc(N*sizeof(int));
   MPI_Status suc;
   MPI_File_read(fin, nums, N, MPI_INT, &suc);
-  if (rank == 0) printNums(N, nums);
+  
   // extract working groups
   MPI_Comm W_COMM = MPI_COMM_WORLD;
   if (size > N/2-1) {
     size = N/2-1;
-    printf("using only %d process\n", size);
     int i; int ranks[size]; for (i=0;i<size;i++) ranks[i]=i;
     MPI_Group O_Group, W_Group;
     MPI_Comm_group(MPI_COMM_WORLD, &O_Group);
@@ -44,8 +43,9 @@ int main (int argc, char** argv) {
   int chunk = (N+size-1) / size;
   if (rank < size) nums = oddEvenSort(N, nums, rank, size, chunk, W_COMM);
   if (rank == 0) {
-    printNums(N, nums);
+    // printNums(N, nums);
     // write sorted array
+    printf("write results\n");
     MPI_File_write(fout, nums, N, MPI_INT, &suc);
   }
   MPI_File_close(&fin); MPI_File_close(&fout);
