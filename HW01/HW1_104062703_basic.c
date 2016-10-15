@@ -7,15 +7,15 @@
 #define min(x,y) (x)<(y)?(x):(y)
 
 typedef struct Message {
-  int idx;
-  int value;
+  int idx; int value;
 } Message;
 
 void openFiles(char* in, char* out);
 void closeFiles(void);
 void printNums(int len, int* nums);
 void swap (int *nums, int i, int j);
-int* oddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm W_COMM);
+int* seqOddEvenSort(int len, int *nums);
+int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm W_COMM);
 
 int main (int argc, char** argv) {
   int rank, size;
@@ -30,78 +30,99 @@ int main (int argc, char** argv) {
   MPI_Status suc;
   MPI_File_read(fin, nums, N, MPI_INT, &suc);
   
+  if (N < 7) { // too less items
+    printf("seq\n");
+    if (rank == 0) { seqOddEvenSort(N, nums); MPI_File_write(fout, nums, N, MPI_INT, &suc);}
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_File_close(&fin); MPI_File_close(&fout); MPI_Finalize();
+    return 0;
+  }
+  
   // extract working groups
   MPI_Comm W_COMM = MPI_COMM_WORLD;
-  if (size > N/2-1) {
-    size = N/2-1;
+  if (size > N/3-1) { // too much workers
+    size = N/3-1;
     int i; int ranks[size]; for (i=0;i<size;i++) ranks[i]=i;
     MPI_Group O_Group, W_Group;
     MPI_Comm_group(MPI_COMM_WORLD, &O_Group);
     MPI_Group_incl(O_Group, size, ranks, &W_Group);
     MPI_Comm_create(MPI_COMM_WORLD, W_Group, &W_COMM);
+  } else { // items must be divisible
+    int chunk = (N+size-1) / size;
+    if ((size-1)*chunk >= N) {
+      size -= 1;
+      int i; int ranks[size]; for (i=0;i<size;i++) ranks[i]=i;
+      MPI_Group O_Group, W_Group;
+      MPI_Comm_group(MPI_COMM_WORLD, &O_Group);
+      MPI_Group_incl(O_Group, size, ranks, &W_Group);
+      MPI_Comm_create(MPI_COMM_WORLD, W_Group, &W_COMM);
+    }
   }
   int chunk = (N+size-1) / size;
-  if (rank < size) nums = oddEvenSort(N, nums, rank, size, chunk, W_COMM);
-  if (rank == 0) {
-    // printNums(N, nums);
-    // write sorted array
-    printf("write results\n");
-    MPI_File_write(fout, nums, N, MPI_INT, &suc);
-  }
+  if (rank < size) nums = parOddEvenSort(N, nums, rank, size, chunk, W_COMM);
+  if (rank == 0) MPI_File_write(fout, nums, N, MPI_INT, &suc);
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_File_close(&fin); MPI_File_close(&fout);
-  MPI_Finalize ();
+  free(nums);
+  MPI_Finalize();
   return 0;
 }
 
 void printNums(int len, int* nums) {
   int i;
-  for (i=0; i<len; i++) printf("****");
-  printf("\n");
-  for (i=0; i<len; i++) {
-    if (i>0) printf(" "); printf("%d", nums[i]);
+  for (i=0; i<len; i++) printf("****"); printf("\n");
+  for (i=0; i<len; i++) {if (i>0) printf(" "); printf("%d", nums[i]);} printf("\n");
+  for (i=0; i<len; i++) printf("****"); printf("\n");
+}
+void swap (int *nums, int i, int j) { int tmp = nums[i];  nums[i] = nums[j]; nums[j] = tmp;}
+int* seqOddEvenSort(int len, int *nums) {
+  int sorted = 0; int i;
+  while (!sorted) {
+    sorted = 1;
+    for (i=1; i<len-1; i+=2) if (nums[i] > nums[i+1]) { swap(nums, i, i+1); sorted = 0; }
+    for (i=0; i<len-1; i+=2) if (nums[i] > nums[i+1]) { swap(nums, i, i+1); sorted = 0;}
   }
-  printf("\n");
-  for (i=0; i<len; i++) printf("****");
-  printf("\n");
+  return nums;
 }
-void swap (int *nums, int i, int j) {
-  int tmp = nums[i];
-  nums[i] = nums[j];
-  nums[j] = tmp;
-}
-int* oddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm W_COMM) {
+int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm W_COMM) {
   // declare new MPI_Type MSG
   Message msg[2];
   MPI_Datatype MSG; MPI_Datatype type[2] = {MPI_INT, MPI_INT}; int blocklen[2] = {1, 1}; MPI_Aint disp[2] = {0, 1};
   MPI_Type_create_struct(2, blocklen, disp, type, &MSG); MPI_Type_commit(&MSG);
-
-  int sorted = 0; int st = rank * chunk; int ed = min(st + chunk-1, len-1);
+  int sorted = 0; int st = min(rank*chunk, len-1); int ed = min(st + chunk-1, len-1);
   int odd, even; if (st%2) {odd = st; even = st-1;} else {odd = ((st-1)>0)?(st-1):(st+1); even = st; }
-  int i;
-  MPI_Status suc;
+  int i; MPI_Status suc;
   while (!sorted) {
     int tsorted = 1;
-    for (i=odd; i<ed; i+=2) if (nums[i] > nums[i+1]) { swap(nums, i, i+1); tsorted = 0; }
-    if ((odd<st) && (rank>=1) && (st%2 == 0)) { msg[0].idx = odd; msg[0].value=nums[odd]; MPI_Send(&msg[0], 1, MSG, rank-1, 0, W_COMM);} else if ((rank+1<size) && (st%2 == 1)) { MPI_Recv(&msg[1], 1, MSG, rank+1, 0, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
-    int last = i-1;
+    // odd phase
+    for (i=odd; i<ed; i+=2) if (nums[i] > nums[i+1]) { swap(nums, i, i+1); tsorted = 0;}
+    if (chunk%2 == 0) { // chunk size is even
+      if (rank>=1) {msg[0].idx = odd; msg[0].value=nums[odd]; MPI_Send(&msg[0], 1, MSG, rank-1, 0, W_COMM);}
+      if (rank+1<size) {MPI_Recv(&msg[1], 1, MSG, rank+1, 0, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
+    } else { // chunk size is odd
+      if ((odd<st) && (rank>=1)) {msg[0].idx = odd; msg[0].value=nums[odd]; MPI_Send(&msg[0], 1, MSG, rank-1, 0, W_COMM);}
+      else if ((rank+1<size) && (st%2 == 1)) {MPI_Recv(&msg[1], 1, MSG, rank+1, 0, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
+    }
+    // last element
     if (rank+1<size) { msg[0].idx = i-1; msg[0].value=nums[i-1]; MPI_Send(&msg[0], 1, MSG, rank+1, 1, W_COMM);}
     if (rank>=1) { MPI_Recv(&msg[1], 1, MSG, rank-1, 1, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
+    
+    // even phase
     for (i=even; i<ed; i+=2) if (nums[i] > nums[i+1]) { swap(nums, i, i+1); tsorted = 0;}
-    if ((even<st) && (rank>=1) && (st%2 == 1)) { msg[0].idx = even; msg[0].value=nums[even]; MPI_Send(&msg[0], 1, MSG, rank-1, 2, W_COMM); } else if ((rank+1<size) && (st%2 == 0)) { MPI_Recv(&msg[1], 1, MSG, rank+1, 2, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
-    last = i-1;
-    if (rank+1<size) { msg[0].idx = i-1; msg[0].value=nums[i-1]; MPI_Send(&msg[0], 1, MSG, rank+1, 1, W_COMM);}
-    if (rank>=1) { MPI_Recv(&msg[1], 1, MSG, rank-1, 1, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
+    if (chunk%2 == 1) { // chunk size is odd
+      if ((even<st) && (rank>=1)) {msg[0].idx = even; msg[0].value=nums[even]; MPI_Send(&msg[0], 1, MSG, rank-1, 2, W_COMM);} else if ((rank+1<size) && (st%2 == 0)) {MPI_Recv(&msg[1], 1, MSG, rank+1, 2, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
+    }
+    // last element
+    if (rank+1<size) { msg[0].idx = i-1; msg[0].value=nums[i-1]; MPI_Send(&msg[0], 1, MSG, rank+1, 3, W_COMM);}
+    if (rank>=1) { MPI_Recv(&msg[1], 1, MSG, rank-1, 3, W_COMM, &suc); nums[msg[1].idx] = msg[1].value;}
     MPI_Allreduce (&tsorted, &sorted, 1, MPI_INT, MPI_MIN, W_COMM);
   }
   // gather all
-  MPI_Request req[size];
-  for (i=0; i<size; i++) { if(i==rank) continue; MPI_Isend(&nums[st], ed-st+1, MPI_INT, i, 4, W_COMM, &req[i]);}
-  MPI_Barrier(W_COMM);
+  for (i=0; i<size; i++) { if(i==rank) continue; MPI_Send(&nums[st], ed-st+1, MPI_INT, i, 4, W_COMM);}
   for (i=0; i<size; i++) {
-    if(i==rank) continue; 
-    int tst = i*chunk; int ted = min(tst+chunk, len);
-    MPI_Irecv(&nums[tst], ted-tst, MPI_INT, i, 4, W_COMM, &req[i]);
-    MPI_Wait(&req[i], &suc);
-  }
+    if(i==rank) continue; int tst = min(i*chunk, len-1); int ted = min(tst+chunk-1, len-1);
+    MPI_Recv(&nums[tst], ted-tst+1, MPI_INT, i, 4, W_COMM, &suc);
+    }
+  
   return nums;
 }
