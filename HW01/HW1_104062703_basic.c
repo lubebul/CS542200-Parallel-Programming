@@ -170,7 +170,7 @@ int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm 
 }
 void writeMeasure(double tot, double cmptime, double commtime, double iotime, FILE *fmse, int size) {
   char fname[100];
-  sprintf(fname, "%s_%d.txt", "adv_mse", size);
+  sprintf(fname, "%s_%d.txt", "basic_mse", size);
   fmse = fopen(fname, "w+");
   printf("%lf %lf %lf %lf\n", cmptime, commtime, iotime, tot);
   fprintf(fmse, "%lf %lf %lf %lf\n", cmptime, commtime, iotime, tot);
