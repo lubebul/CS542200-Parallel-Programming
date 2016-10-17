@@ -30,7 +30,7 @@ int main (int argc, char** argv) {
   assert(("Usage: ./HW_104062703_advanced N in-file out-file\n") && argc == 4);
   // seq I/O
   FILE *fin, *fout;
-  fin = fopen(argv[2], 'r'); fout = fopen(argv[2], 'w+');
+  fin = fopen(argv[2], "r");
   // read number array
   int N = atoi(argv[1]); int *nums = malloc(N*sizeof(int));
   MPI_Status suc;
@@ -46,6 +46,7 @@ int main (int argc, char** argv) {
       cmptime += MPI_Wtime()-ss;
       // I/O time
       ss = MPI_Wtime();
+      fout = fopen(argv[2], "w+");
       fwrite(nums, sizeof(int), N, fout);
       iotime += MPI_Wtime()-ss;
     }
@@ -88,6 +89,7 @@ int main (int argc, char** argv) {
   if (rank == mnode) {
     // I/O
     ss = MPI_Wtime();
+    fout = fopen(argv[2], "w+");
     fwrite(nums, sizeof(int), N, fout);
     iotime += MPI_Wtime()-ss;
     writeMeasure(MPI_Wtime()-tot, cmptime, commtime, iotime, fmse, size);

@@ -1,4 +1,4 @@
-NUM = 300
+NUM = 3000
 P = 6
 C = test1.out
 I = test1.in
