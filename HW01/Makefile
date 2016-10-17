@@ -1,9 +1,11 @@
 NUM = 15
 C = ../testcase/sorted2
 I = ../testcase/testcase2
+
 BASIC = HW1_104062703_basic
 ADV = HW1_104062703_advanced
 all:
+	make gen
 	make run
 	make check
 	make clear

@@ -6,7 +6,7 @@
 #define max(x,y) (x)>(y)?(x):(y)
 #define min(x,y) (x)<(y)?(x):(y)
 
-int cmp(const void *a, const void *b) {return *(int*)a-*(int*)b;}
+int cmp(const void* a, const void* b);
 void openFiles(char* in, char* out);
 void closeFiles(void);
 void printNums(int len, int* nums);
@@ -28,7 +28,10 @@ int main (int argc, char** argv) {
   MPI_Status suc;
   MPI_File_read(fin, nums, N, MPI_INT, &suc);
   if (N < 100) { // too less items
-    if (rank == 0) { seqOddEvenSort(N, nums); MPI_File_write(fout, nums, N, MPI_INT, &suc);}
+    if (rank == 0) {
+      qsort(nums, N, sizeof(int), cmp);
+      MPI_File_write(fout, nums, N, MPI_INT, &suc);
+    }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_File_close(&fin); MPI_File_close(&fout); MPI_Finalize();
     free(nums);
@@ -66,6 +69,10 @@ int main (int argc, char** argv) {
   return 0;
 }
 
+int cmp(const void* a, const void* b) {
+  int va = *(int *) a; int vb = *(int *) b;
+  return (va > vb) - (va < vb);
+}
 void printNums(int len, int* nums) {
   int i;
   for (i=0; i<len; i++) printf("****"); printf("\n");
