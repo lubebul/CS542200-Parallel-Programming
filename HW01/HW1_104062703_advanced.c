@@ -27,7 +27,7 @@ int main (int argc, char** argv) {
   int N = atoi(argv[1]); int *nums = malloc(N*sizeof(int));
   MPI_Status suc;
   MPI_File_read(fin, nums, N, MPI_INT, &suc);
-  if (N < 7) { // too less items
+  if (N < 100) { // too less items
     if (rank == 0) { qsort(nums, N, sizeof(int), cmp); MPI_File_write(fout, nums, N, MPI_INT, &suc);}
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_File_close(&fin); MPI_File_close(&fout); MPI_Finalize();

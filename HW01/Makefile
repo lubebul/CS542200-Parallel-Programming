@@ -1,4 +1,4 @@
-NUM = 150
+NUM = 15
 BASIC = HW1_104062703_basic
 ADV = HW1_104062703_advanced
 all:
@@ -8,7 +8,7 @@ all:
 	make clear
 run:
 	mpicc -o $(ADV) $(ADV).c
-	mpirun -n 10 ./$(ADV) $(NUM) test1.in rst.out
+	mpirun -n 12 ./$(ADV) $(NUM) test1.in rst.out
 gen:
 	python gen_testcase.py -a gen -n $(NUM) -f test1
 check:
