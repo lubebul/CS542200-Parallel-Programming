@@ -5,6 +5,9 @@
 
 #define max(x,y) (x)>(y)?(x):(y)
 #define min(x,y) (x)<(y)?(x):(y)
+// measure time
+double cmptime, commtime, iotime, tot;
+int mnode;
 
 int cmp(const void* a, const void* b);
 void openFiles(char* in, char* out);
@@ -14,10 +17,15 @@ void swap (int *nums, int i, int j);
 int* merge(int *A, int *B, int asize, int bsize);
 int* seqOddEvenSort(int len, int *nums);
 int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm W_COMM);
+void writeMeasure(double tot, double cmptime, double commtime, double iotime, FILE *fmse, int size);
 
 int main (int argc, char** argv) {
   int rank, size;
+  // measure time
+  double ss;
+  FILE *fmse; cmptime = commtime = iotime = tot = 0.0; mnode = 0; ss = 0;
   MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == mnode) tot = ss = MPI_Wtime();
   MPI_File fin, fout;
   // dealing with I/Os
   assert(("Usage: ./HW_104062703_advanced N in-file out-file\n") && argc == 4);
@@ -26,19 +34,34 @@ int main (int argc, char** argv) {
   // read number array
   int N = atoi(argv[1]); int *nums = malloc(N*sizeof(int));
   MPI_Status suc;
+  
   MPI_File_read(fin, nums, N, MPI_INT, &suc);
+  if (rank == mnode) iotime += MPI_Wtime()-ss;
+  
   if (N < 100) { // too less items
-    if (rank == 0) {
+    if (rank == mnode) {
+      // computation
+      ss = MPI_Wtime();
       qsort(nums, N, sizeof(int), cmp);
+      cmptime += MPI_Wtime()-ss;
+      // I/O time
+      ss = MPI_Wtime();
       MPI_File_write(fout, nums, N, MPI_INT, &suc);
+      iotime += MPI_Wtime()-ss;
     }
+    // I/O time
+    ss = MPI_Wtime();
     MPI_Barrier(MPI_COMM_WORLD);
-    MPI_File_close(&fin); MPI_File_close(&fout); MPI_Finalize();
+    commtime += MPI_Wtime()-ss;
+    MPI_File_close(&fin); MPI_File_close(&fout);
+    if (rank == mnode) writeMeasure(MPI_Wtime()-tot, cmptime, commtime, iotime, fmse, size);
+    MPI_Finalize();
     free(nums);
     return 0;
   }
-  
-  // extract working groups
+
+  // communication: extract working groups
+  if (rank == mnode) ss = MPI_Wtime();
   MPI_Comm W_COMM = MPI_COMM_WORLD;
   if (size > N/3-1) { // too much workers
     size = N/3-1;
@@ -58,10 +81,17 @@ int main (int argc, char** argv) {
       MPI_Comm_create(MPI_COMM_WORLD, W_Group, &W_COMM);
     }
   }
+  if (rank == mnode) commtime += MPI_Wtime()-ss;
   
   int chunk = (N+size-1) / size;
   if (rank < size) nums = parOddEvenSort(N, nums, rank, size, chunk, W_COMM);
-  if (rank == 0) MPI_File_write(fout, nums, N, MPI_INT, &suc);
+  if (rank == mnode) {
+    // I/O
+    ss = MPI_Wtime();
+    MPI_File_write(fout, nums, N, MPI_INT, &suc);
+    iotime += MPI_Wtime()-ss;
+    writeMeasure(MPI_Wtime()-tot, cmptime, commtime, iotime, fmse, size);
+  }
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_File_close(&fin); MPI_File_close(&fout);
   free(nums);
@@ -105,51 +135,98 @@ int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm 
   int st = min(rank*chunk, len-1); int ed = min(st + chunk-1, len-1);
   int i; MPI_Status suc;
   int *tmp_merge = (int *)malloc(sizeof(int)*chunk*2);
-  
+  double ss;
+  // computation
+  if (rank == mnode) ss = MPI_Wtime();
   qsort(&nums[st], ed-st+1, sizeof(int), cmp);
+  if (rank == mnode) cmptime += MPI_Wtime()-ss;
   
   while (s--) {
     // odd phase
     if ((rank%2 == 0) && (rank>=1)) {
       // send to sort
       int rsize = ed-st+1;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
+      
       MPI_Send(&rsize, 1, MPI_INT, rank-1, 0, W_COMM);
       MPI_Send(&nums[st], ed-st+1, MPI_INT, rank-1, 1, W_COMM);
       // receive sorted
       MPI_Recv(&nums[st], ed-st+1, MPI_INT, rank-1, 2, W_COMM, &suc);
+      
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
     } else if ((rank%2 == 1) && (rank+1<size)) {
       int rsize;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
+      
       MPI_Recv(&rsize, 1, MPI_INT, rank+1, 0, W_COMM, &suc);
       MPI_Recv(&nums[ed+1], rsize, MPI_INT, rank+1, 1, W_COMM, &suc);
-      // merge
+
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
+
+      // computation: merge
+      if (rank == mnode) ss = MPI_Wtime();
       tmp_merge = merge(&nums[st], &nums[ed+1], ed-st+1, rsize);
       for (i=0; i<rsize+(ed-st+1); i++) nums[st+i] = tmp_merge[i];
+      
+      if (rank == mnode) cmptime += MPI_Wtime()-ss;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
       MPI_Send(&nums[ed+1], rsize, MPI_INT, rank+1, 2, W_COMM);
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
     }
     
     // even phase
     if ((rank%2 == 1) && (rank>=1)) {
       // send to sort
       int rsize = ed-st+1;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
+      
       MPI_Send(&rsize, 1, MPI_INT, rank-1, 3, W_COMM);
       MPI_Send(&nums[st], ed-st+1, MPI_INT, rank-1, 4, W_COMM);
       // receive sorted
       MPI_Recv(&nums[st], ed-st+1, MPI_INT, rank-1, 5, W_COMM, &suc);
+
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
     } else if ((rank%2 == 0) && (rank+1<size)) {
       int rsize;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
+
       MPI_Recv(&rsize, 1, MPI_INT, rank+1, 3, W_COMM, &suc);
       MPI_Recv(&nums[ed+1], rsize, MPI_INT, rank+1, 4, W_COMM, &suc);
-      // merge
+
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
+      // computation: merge
+      if (rank == mnode) ss = MPI_Wtime();
+      
       tmp_merge = merge(&nums[st], &nums[ed+1], ed-st+1, rsize);
       for (i=0; i<rsize+(ed-st+1); i++) nums[st+i] = tmp_merge[i];
+
+      if (rank == mnode) cmptime += MPI_Wtime()-ss;
+      // communication
+      if (rank == mnode) ss = MPI_Wtime();
       MPI_Send(&nums[ed+1], rsize, MPI_INT, rank+1, 5, W_COMM);
+      if (rank == mnode) commtime += MPI_Wtime()-ss;
     }
   }
   free(tmp_merge);
   
-  // gather all
+  // communication: gather all
+  if (rank == mnode) ss = MPI_Wtime();
+  
   if (rank+1<size) MPI_Recv(&nums[ed+1], len-ed-1, MPI_INT, rank+1, 6, W_COMM, &suc);
   if (rank>=1) MPI_Send(&nums[st], len-st, MPI_INT, rank-1, 6, W_COMM);
-  
+
+  if (rank == mnode) commtime += MPI_Wtime()-ss;
   return nums;
+}
+void writeMeasure(double tot, double cmptime, double commtime, double iotime, FILE *fmse, int size) {
+  char fname[100];
+  sprintf(fname, "%s_%d.txt", "adv_mse", size);
+  fmse = fopen(fname, "w+");
+  printf("%lf %lf %lf %lf\n", cmptime, commtime, iotime, tot);
+  fprintf(fmse, "%lf %lf %lf %lf\n", cmptime, commtime, iotime, tot);
 }
