@@ -160,12 +160,12 @@ int* parOddEvenSort(int len, int *nums, int rank, int size, int chunk, MPI_Comm 
   }
   // gather all: communication
   if (rank == mnode) ss = MPI_Wtime();
-  for (i=0; i<size; i++) { if(i==rank) continue; MPI_Send(&nums[st], ed-st+1, MPI_INT, i, 4, W_COMM);}
-  for (i=0; i<size; i++) {
-    if(i==rank) continue; int tst = min(i*chunk, len-1); int ted = min(tst+chunk-1, len-1);
-    MPI_Recv(&nums[tst], ted-tst+1, MPI_INT, i, 4, W_COMM, &suc);
-    }
+  
+  if (rank+1<size) MPI_Recv(&nums[ed+1], len-ed-1, MPI_INT, rank+1, 4, W_COMM, &suc);
+  if (rank>=1) MPI_Send(&nums[st], len-st, MPI_INT, rank-1, 4, W_COMM);
+
   if (rank == mnode) commtime += MPI_Wtime()-ss;
+  
   return nums;
 }
 void writeMeasure(double tot, double cmptime, double commtime, double iotime, FILE *fmse, int size) {
