@@ -27,8 +27,8 @@ int main (int argc, char** argv) {
     fread(nums, sizeof(int), N, fin);
     fout = fopen(argv[3], "w+");
     fwrite(nums, sizeof(int), N, fout);
-    fclose(fin); fclose(fout);
     iotime += MPI_Wtime()-ss;
+    fclose(fin); fclose(fout);
     free(nums);
     char fname[100];
     sprintf(fname, "%s_%d.txt", "seq_mse", size);
