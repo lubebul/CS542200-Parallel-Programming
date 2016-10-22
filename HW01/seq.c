@@ -24,13 +24,11 @@ int main (int argc, char** argv) {
     fin = fopen(argv[2], "r");
     // read number array
     int N = atoi(argv[1]); int *nums = malloc(N*sizeof(int));
-    iotime += MPI_Wtime()-ss;
     fread(nums, sizeof(int), N, fin);
-
     fout = fopen(argv[3], "w+");
     fwrite(nums, sizeof(int), N, fout);
-    iotime += MPI_Wtime()-ss;
     fclose(fin); fclose(fout);
+    iotime += MPI_Wtime()-ss;
     free(nums);
     char fname[100];
     sprintf(fname, "%s_%d.txt", "seq_mse", size);
