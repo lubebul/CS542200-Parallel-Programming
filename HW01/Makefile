@@ -5,8 +5,7 @@ I = test1.in
 
 BASIC = HW1_104062703_basic
 ADV = HW1_104062703_advanced
-SEQ = HW1_104062703_advanced
-PROG = $(BASIC)
+PROG = mpi
 all:
 	make gen
 	make run
