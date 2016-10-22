@@ -27,7 +27,7 @@ int main (int argc, char** argv) {
     iotime += MPI_Wtime()-ss;
     fread(nums, sizeof(int), N, fin);
 
-    fout = fopen(argv[2], "w+");
+    fout = fopen(argv[3], "w+");
     fwrite(nums, sizeof(int), N, fout);
     iotime += MPI_Wtime()-ss;
     fclose(fin); fclose(fout);
