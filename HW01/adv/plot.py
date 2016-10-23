@@ -24,37 +24,24 @@ def grab_single(ver):
     df = df.sort_values(['p'], ascending=[1])
     return df
 
-def plot_break(df, title): 
-    p1 = figure(title=title)
-    p1.line(df['p'].values, df['tot'], legend='total', line_color='black', line_width=1)
-    p1.line(df['p'].values, df['cmp'], legend='computation', line_color='red', line_width=4)
-    p1.line(df['p'].values, df['comm'], legend='communication', line_color='blue', line_width=4)
-    p1.line(df['p'].values, df['io'], legend='I/O', line_color='green', line_width=1)
+def plot_break(single, multi, title):
+    p = figure(title=title)
     # strong scale
-    s = [float(df['tot'].values[0])/float(x) for x in df['p'].values]
-    c = [float(df['cmp'].values[0])/float(x) for x in df['p'].values]
-    p1.line(df['p'].values, s, legend='ideal: total', line_color='black', line_width=1, line_dash='dashed')
-    p1.line(df['p'].values, c, legend='ideal: computation', line_color='red', line_width=1, line_dash='dashed')
+    f = float(multi['cmp'].values[0])/float(multi['tot'].values[0])
+    s = [float(single['tot'].values[0])/float(single['tot'].values[i]) for i in range(single.shape[0])]
+    m = [float(single['tot'].values[0])/float(multi['tot'].values[i]) for i in range(multi.shape[0])]
+    i = [1./((1-f)+f/float(multi['p'].values[i])) for i in range(multi.shape[0])]
+    p.line(single['p'].values, s, legend='single node', line_color='green', line_width=2)
+    p.line(multi['p'].values, m, legend='multi node', line_color='blue', line_width=2)
+    p.line(multi['p'].values, i, legend='maximum speedup', line_color='black', line_width=1, line_dash='dashed')
     
-    p1.circle(df['p'].values, df['tot'], color='black', size=2)
-    p1.circle(df['p'].values, df['cmp'], color='red', size=6)
-    p1.circle(df['p'].values, df['comm'], color='blue', size=6)
-    p1.circle(df['p'].values, df['io'], color='green', size=2)
-    p1.xaxis.axis_label = '#proc'
-    p1.yaxis.axis_label = 'time(s)'
-
-    p2 = figure(title=title)
-    sp = [float(df['tot'].values[0])/float(df['tot'].values[i]) for i in range(df.shape[0])]
-    p2.line(df['p'].values, sp, legend='speedup', line_color='blue', line_width=3)
-    # strong scale
-    p2.line(df['p'].values, df['p'].values, legend='ideal: speedup', line_color='black', line_width=2, line_dash='dashed')
-    p2.circle(df['p'].values, sp, color='blue', size=6)
-    p2.xaxis.axis_label = '#proc'
-    p2.yaxis.axis_label = 'speedup-factor'
-
-    p = HBox(p1, p2)
+    p.circle(single['p'].values, s, color='green', size=4)
+    p.circle(multi['p'].values, m, color='blue', size=4)
+    p.xaxis.axis_label = '#proc'
+    p.yaxis.axis_label = 'speedup'
     output_file('{}.html'.format(title))
     save(p)
 
-df = grab_single('adv')
-plot_break(df, 'N=4,000,000,000')
+single = grab_single('single/adv')
+multi = grab_single('multi/adv')
+plot_break(single, multi, 'N=500,000,000')
