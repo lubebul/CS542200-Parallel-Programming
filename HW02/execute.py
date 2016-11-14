@@ -28,12 +28,20 @@ def test(name):
                     count += 1
             while sent-count > 7:
                 count = 0
-                for f in os.listdir('../'):
+                for f in os.listdir('.'):
                     if 'HYBRID.e' in f:
                         count += 1
-                time.sleep(5)
+		print('count={}, sent={}'.format(count, sent))
+		time.sleep(1)
             os.system('qsub {}'.format(jobname))
             sent += 1
+    while sent == count:
+	count = 0
+	for f in os.listdir('.'):
+	    if 'HYBRID.e' in f:
+		count += 1
+	print('count={}, sent={}'.format(count, sent))
+	time.sleep(1)
     # collect into 1 file
     cts = ''
     for f in sorted(os.listdir('../')):
