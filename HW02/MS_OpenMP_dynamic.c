@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
+#include <time.h>
 #include <omp.h>
 
 #define max(x,y) (x)>(y)?(x):(y)
@@ -24,10 +25,12 @@ int main(int argc, char** argv) {
   double dimag = strtod(argv[4], NULL); double uimag = strtod(argv[5], NULL);
   int width = atoi(argv[6]); int height = atoi(argv[7]);
   int Xflag = 1-strcmp("enable", argv[8]);
-  // MPI routine
   omp_set_num_threads(num_thread);
+  time_t st, ed;
+  st = time(NULL);
   parallel(lreal, rreal, dimag, uimag, width, height, Xflag, num_thread);
-  
+  ed = time(NULL);
+  printf("%d %d %lf\n", size, num_thread, ed-st);
   return 0;
 }
 

@@ -24,18 +24,22 @@ int main(int argc, char** argv) {
   int num_thread = atoi(argv[1]);
   double lreal = strtod(argv[2], NULL); double rreal = strtod(argv[3], NULL);
   double dimag = strtod(argv[4], NULL); double uimag = strtod(argv[5], NULL);
+  double st;
   int width = atoi(argv[6]); int height = atoi(argv[7]);
   int Xflag = 1-strcmp("enable", argv[8]);
   // MPI routine
   int rank, size;
   MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  if (rank == 0) st = MPI_Wtime();
   if (size == 1) seq(lreal, rreal, dimag, uimag, width, height, Xflag);
   else {
     if (rank == 0) master(lreal, rreal, dimag, uimag, width, height, Xflag, size);
     else slave(lreal, rreal, dimag, uimag, width, height, size, rank);
   }
-
+  
+  if (rank == 0) {
+    printf("%d %d %lf\n", size, num_thread, MPI_Wtime()-st);
+  }
   MPI_Finalize();
   return 0;
 }

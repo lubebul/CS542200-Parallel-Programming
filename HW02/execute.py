@@ -9,7 +9,7 @@ NAME = ['MS_MPI_static',
         'MS_Hybrid_dynamic']
 FILE = '#PBS -N HYBRID\n#PBS -r n\n#PBS -l nodes={}:ppn={}\n#PBS -l walltime=00:05:00\n#PBS -o {}\ncd $PBS_O_WORKDIR\nexport MV2_ENABLE_AFFINITY=0\n{}'
 
-CMD = 'time mpiexec -ppn {} ./{} {} -2 2 -2 2 1000 1000 disable'
+CMD = 'mpiexec -ppn {} ./{} {} -2 2 -2 2 1000 1000 disable'
 
 def test(name):
     os.system('make {}'.format(name))
@@ -44,14 +44,14 @@ def test(name):
 	time.sleep(1)
     # collect into 1 file
     cts = ''
-    for f in sorted(os.listdir('../')):
-        if 'HYBRID' in f:
-            with open(f, 'r') as fin:
+    for node in [1, 2, 3, 4]:
+        for proc in [1, 2, 4, 8, 12]:
+            with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
                 data = fin.read()
             cts = '{}\n{}'.format(cts, data)
     with open('{}.txt'.format(name), 'w+') as f:
         f.write(cts)
-    os.system('rm HYBRID.* job_*')
+    os.system('rm HYBRID.* job_* *.txt')
     os.system('make clean')
 for name in NAME:
     test(name)
