@@ -22,16 +22,15 @@ def test(name):
             with open(jobname, 'w+') as f:
                 f.write(job)
             # check current executed jobs
+            count = 0
             for f in os.listdir('../'):
-                if 'HYBRID' in f:
+                if 'HYBRID.e' in f:
                     count += 1
-            count /= 2
             while sent-count > 7:
-                # check current executed jobs
+                count = 0
                 for f in os.listdir('../'):
-                    if 'HYBRID' in f:
+                    if 'HYBRID.e' in f:
                         count += 1
-                count /= 2
                 time.sleep(5)
             os.system('qsub {}'.format(jobname))
             sent += 1
