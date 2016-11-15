@@ -35,7 +35,7 @@ def test(name):
 		time.sleep(1)
             os.system('qsub {}'.format(jobname))
             sent += 1
-    while sent == count:
+    while sent != count:
 	count = 0
 	for f in os.listdir('.'):
 	    if 'HYBRID.e' in f:
@@ -49,9 +49,9 @@ def test(name):
             with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
                 data = fin.read()
             cts = '{}\n{}'.format(cts, data)
-    with open('{}.txt'.format(name), 'w+') as f:
+    with open('{}.out'.format(name), 'w+') as f:
         f.write(cts)
-    os.system('rm HYBRID.* job_* *.txt')
+    os.system('rm HYBRID.* *.txt')
     os.system('make clean')
 for name in NAME:
     test(name)

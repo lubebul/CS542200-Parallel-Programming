@@ -26,11 +26,11 @@ int main(int argc, char** argv) {
   int width = atoi(argv[6]); int height = atoi(argv[7]);
   int Xflag = 1-strcmp("enable", argv[8]);
   omp_set_num_threads(num_thread);
-  time_t st, ed;
-  st = time(NULL);
+  clock_t st, ed;
+  st = clock();
   parallel(lreal, rreal, dimag, uimag, width, height, Xflag, num_thread);
-  ed = time(NULL);
-  printf("%d %d %lf\n", size, num_thread, ed-st);
+  ed = clock();
+  printf("%d %d %lf\n", 1, num_thread, (double)(ed-st)/CLOCKS_PER_SEC);
   return 0;
 }
 
