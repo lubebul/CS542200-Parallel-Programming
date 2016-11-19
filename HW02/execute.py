@@ -14,9 +14,10 @@ CMD = 'mpiexec -ppn {} ./{} {} -2 2 -2 2 1000 1000 disable'
 def test(name):
     os.system('make {}'.format(name))
     sent, count = 0, 0
-    
-    for node in [1, 2, 3, 4]:
-        for proc in [1, 2, 4, 8, 12]:
+    NODE = [1, 2, 3, 4] if 'OpenMP' not in name else [1]
+    PROC = [1, 2, 4, 8, 12] if 'MPI' not in name else [1]
+    for node in NODE:
+        for proc in PROC:
             job = FILE.format(node, proc, '{}_{}_{}.txt'.format(name, node, proc), CMD.format(node, name, proc))
             jobname = 'job_{}_{}_{}.txt'.format(name, node, proc)
             with open(jobname, 'w+') as f:
@@ -44,8 +45,8 @@ def test(name):
 	time.sleep(1)
     # collect into 1 file
     cts = ''
-    for node in [1, 2, 3, 4]:
-        for proc in [1, 2, 4, 8, 12]:
+    for node in NODE:
+        for proc in PROC:
             with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
                 data = fin.read()
             cts = '{}\n{}'.format(cts, data)
