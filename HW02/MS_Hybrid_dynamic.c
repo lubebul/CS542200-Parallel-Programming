@@ -155,7 +155,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   for (j=0; j<num_thread; j++) {
     counts[j] = 0; times[j] = 0.0;
   }
-  int *color = (int *) malloc(sizeof(int)*(height+1));
+  int color[height+1];
   while(suc.MPI_TAG == NEXT) {
 #pragma omp parallel for schedule(dynamic) shared(color)
     for (j=0; j<height; j++) {
@@ -180,6 +180,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
       ed = clock();
       times[id] += (double)(ed-st)/CLOCKS_PER_SEC;
       counts[id] += 1;
+      free(z); free(c);
     }
     
     color[height] = row;

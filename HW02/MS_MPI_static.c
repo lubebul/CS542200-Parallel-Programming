@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
   if (rank == 0) {
     printf("%d %d %lf\n", size, num_thread, MPI_Wtime()-st);
   }
+
   MPI_Finalize();
   return 0;
 }
