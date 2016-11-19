@@ -7,7 +7,7 @@ NAME = ['MS_MPI_static',
         'MS_OpenMP_dynamic',
         'MS_Hybrid_static',
         'MS_Hybrid_dynamic']
-def testStrong(name):
+def test(name, tag):
     FILE = '#PBS -N HYBRID\n#PBS -r n\n#PBS -l nodes={}:ppn={}\n#PBS -l walltime=00:05:00\n#PBS -o {}\ncd $PBS_O_WORKDIR\nexport MV2_ENABLE_AFFINITY=0\n{}'
     CMD = 'mpiexec -n {} ./{} {} -2 2 -2 2 1000 1000 disable'
     os.system('make {}'.format(name))
@@ -48,7 +48,7 @@ def testStrong(name):
         with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
             data = fin.read()
         cts = '{}\n{}'.format(cts, data)
-    with open('{}_strong.out'.format(name), 'w+') as f:
+    with open('{}_{}.out'.format(name, tag), 'w+') as f:
         f.write(cts)
     os.system('rm HYBRID.* *.txt')
     os.system('make clean')
@@ -105,5 +105,6 @@ def testWeak(name):
     os.system('rm HYBRID.* *.txt')
     os.system('make clean')
 for name in NAME:
-    testStrong(name)
+    #test(name, 'strong')
+    test(name, 'load')
     #testWeak(name)

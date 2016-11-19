@@ -148,11 +148,13 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   double yscale = (uimag-dimag)/(double)height;
   MPI_Status suc; MPI_Request req;
   int j, row;
-  
+  int count = 0;
+  double st = MPI_Wtime();
   MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
   MPI_Wait(&req, &suc);
   int *color = (int *) malloc(sizeof(int)*(height+1));
   while(suc.MPI_TAG == NEXT) {
+    count += 1;
 #pragma omp parallel for schedule(dynamic) shared(color)
     for (j=0; j<height; j++) {
       Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
@@ -179,4 +181,6 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
     MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
   }
+
+  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);  
 }

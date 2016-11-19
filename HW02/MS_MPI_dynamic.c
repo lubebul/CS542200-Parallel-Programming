@@ -142,9 +142,13 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
   int *color = (int *) malloc(sizeof(int)*(height+1));
   int row;
+  int count = 0;
+  double st = MPI_Wtime();
+  
   MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
   MPI_Wait(&req, &suc);
   while(suc.MPI_TAG == NEXT) {
+    count += 1;
     for (j=0; j<height; j++) {
       z->real = 0.0; z->imag = 0.0;
       c->real = ((double) row*xscale) + lreal;
@@ -167,4 +171,6 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
     MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
   }
+
+  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);
 }

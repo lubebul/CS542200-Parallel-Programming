@@ -138,7 +138,9 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   int i; int start;
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
-  MPI_Request req; MPI_Status suc; 
+  MPI_Request req; MPI_Status suc;
+  int count = 0;
+  double st = MPI_Wtime();
   // recv START signal
   MPI_Irecv(&start, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
   MPI_Wait(&req, &suc);
@@ -165,5 +167,9 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
     color[height] = i;
     MPI_Isend(color, height+1, MPI_INT, 0, i, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
+    #pragma omp critical
+    count += 1;
   }
+
+  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);
 }

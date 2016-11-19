@@ -53,10 +53,17 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
   int color[width][height];
+  int counts[size]; double times[size];
+  for (i=0; i<size; i++) {
+    counts[i] = 0;
+    times[i] = 0.0;
+  }
   
 #pragma omp parallel for schedule(static) num_threads(size) shared(color) collapse(2)
-  for (i=0; i<width; i++) {   
+  for (i=0; i<width; i++) {
     for (j=0; j<height; j++) {
+      clock_t st, ed;
+      st = clock();
       int repeats; double lengthsq, tmp;
       Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl));
       Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
@@ -72,6 +79,10 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
 	repeats++;
       }
       color[i][j] = repeats;
+      int id = omp_get_thread_num();
+      ed = clock();
+      times[id] += (double)(ed-st)/CLOCKS_PER_SEC;
+      counts[id]+=1;
     }
   }
   if (Xflag) {
@@ -83,4 +94,6 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
     XFlush(display);
     sleep(5);
   }
+  for (i=0; i<size; i++)
+    printf("[%d] %d %lf\n", i, counts[i]*height, times[i]);
 }
