@@ -66,7 +66,7 @@ void seq(double lreal, double rreal, double dimag, double uimag, int width, int 
   double yscale = (uimag-dimag)/(double)height;
   int color[width][height];
   
-#pragma omp parallel for schedule(static) num_threads(size) shared(color) collapse(2)
+#pragma omp parallel for schedule(static) num_threads(num_thread) shared(color) collapse(2)
   for (i=0; i<width; i++) {   
     for (j=0; j<height; j++) {
       int repeats; double lengthsq, tmp;

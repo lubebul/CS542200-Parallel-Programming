@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <assert.h
+#include <assert.h>
 #include <unistd.h>
 #include <mpi.h>
 
@@ -136,7 +136,7 @@ void master(double lreal, double rreal, double dimag, double uimag, int width, i
 
 void slave(double lreal, double rreal, double dimag, double uimag, int width, int height, int size, int rank) {
   MPI_Status suc; MPI_Request req;
-  int i, j; int repeats; double lengthsq, tmp;
+  int j; int repeats; double lengthsq, tmp;
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
   Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));

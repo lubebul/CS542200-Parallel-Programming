@@ -26,6 +26,6 @@ MS_seq: MS_seq.c
 	$(CC) $(CCFLAGS) -o $@ $? $(LDFLAGS)
 
 run:
-	mpiexec -ppn 2 ./MS_Hybrid_static 2 -2 2 -2 2 800 800 enable
+	mpiexec -ppn 2 ./MS_MPI_static 2 -2 2 -2 2 800 800 disable
 clean:
 	rm -f MS_MPI_static MS_MPI_dynamic MS_OpenMP_static MS_OpenMP_dynamic MS_Hybrid_static MS_Hybrid_dynamic MS_seq
