@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <omp.h>
 #include <mpi.h>
+#include <time.h>
 
 #define max(x,y) (x)>(y)?(x):(y)
 #define min(x,y) (x)<(y)?(x):(y)
@@ -139,15 +140,18 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
   MPI_Request req; MPI_Status suc;
-  int count = 0;
-  double st = MPI_Wtime();
+  int counts[num_thread]; double times[num_thread];
   // recv START signal
   MPI_Irecv(&start, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
   MPI_Wait(&req, &suc);
-
+  for (i=0; i<num_thread; i++) {
+    counts[i] = 0; times[i] = 0.0;
+  }
 #pragma omp parallel for schedule(static) num_threads(num_thread) private(req, suc)
   for (i=rank-1; i<width; i+=size-1) { // column partition
     int repeats, j; double lengthsq, tmp;
+    clock_t st, ed;
+    st = clock();
     Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
     int color[height+1];
     for (j=0; j<height; j++) {
@@ -163,13 +167,16 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
 	repeats++;
       }
       color[j] = repeats;
+      int id = omp_get_thread_num();
+      ed = clock();
+      times[id] += (double)(ed-st)/CLOCKS_PER_SEC;
+      counts[id] += 1;
     }
     color[height] = i;
     MPI_Isend(color, height+1, MPI_INT, 0, i, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
-    #pragma omp critical
-    count += 1;
   }
 
-  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);
+  for (i=0; i<num_thread; i++)
+    printf("[%d] %d %lf\n", (rank-1)*num_thread+i, counts[i]*height, times[i]);
 }
