@@ -1,5 +1,9 @@
 
-[3] 394240 5.510484
-[2] 435200 5.511140
-4 2 5.513562
-[1] 808960 5.513495
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 23458 RUNNING AT pp19
+=   EXIT CODE: 139
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================

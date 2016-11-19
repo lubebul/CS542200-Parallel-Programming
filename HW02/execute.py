@@ -104,7 +104,7 @@ def testWeak(name):
         f.write(cts)
     os.system('rm HYBRID.* *.txt')
     os.system('make clean')
-def testWeak(name):
+def testLoad(name):
     FILE = '#PBS -N HYBRID\n#PBS -r n\n#PBS -l nodes={}:ppn={}\n#PBS -l walltime=00:05:00\n#PBS -o {}\ncd $PBS_O_WORKDIR\nexport MV2_ENABLE_AFFINITY=0\n{}'
     CMD = 'mpiexec -n {} ./{} {} -2 2 -2 2 {} {} disable'
     os.system('make {}'.format(name))
