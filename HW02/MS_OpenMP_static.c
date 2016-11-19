@@ -95,5 +95,5 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
     sleep(5);
   }
   for (i=0; i<size; i++)
-    printf("[%d] %d %lf\n", i, counts[i]*height, times[i]);
+    printf("[%d] %d %lf\n", i, counts[i], times[i]);
 }
