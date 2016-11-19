@@ -157,7 +157,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   }
   int color[height+1];
   while(suc.MPI_TAG == NEXT) {
-#pragma omp parallel for schedule(dynamic) shared(color)
+#pragma omp parallel for schedule(dynamic) shared(color, counts, times)
     for (j=0; j<height; j++) {
       clock_t st, ed;
       st = clock();
@@ -184,7 +184,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
     }
     
     color[height] = row;
-    MPI_Isend(color, height+1, MPI_INT, 0, NEXT, MPI_COMM_WORLD, &req);
+    MPI_Isend(&color[0], height+1, MPI_INT, 0, NEXT, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
     // receive next command
     MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);

@@ -141,7 +141,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
   Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
-  int *color = (int *) malloc(sizeof(int)*(height+1));
+  int color[height+1] ;
   int row;
   int count = 0;
   double st = MPI_Wtime();
@@ -165,7 +165,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
       color[j] = repeats;
     }
     color[height] = row;
-    MPI_Isend(color, height+1, MPI_INT, 0, RECV, MPI_COMM_WORLD, &req);
+    MPI_Isend(&color[0], height+1, MPI_INT, 0, RECV, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
 
     // receive next command
