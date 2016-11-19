@@ -9,7 +9,7 @@ NAME = ['MS_MPI_static',
         'MS_Hybrid_dynamic']
 FILE = '#PBS -N HYBRID\n#PBS -r n\n#PBS -l nodes={}:ppn={}\n#PBS -l walltime=00:05:00\n#PBS -o {}\ncd $PBS_O_WORKDIR\nexport MV2_ENABLE_AFFINITY=0\n{}'
 
-CMD = 'mpiexec -ppn {} ./{} {} -2 2 -2 2 1000 1000 disable'
+CMD = 'mpiexec -n {} ./{} {} -2 2 -2 2 1000 1000 disable'
 
 def test(name):
     os.system('make {}'.format(name))

@@ -112,7 +112,15 @@ void master(double lreal, double rreal, double dimag, double uimag, int width, i
   }
   
   MPI_Status suc; MPI_Request req;
-  int i, j; int *color = (int *) malloc(sizeof(int)*(height+1));
+  int i, j;
+  int start = -1;
+  // start
+  for (i=1; i<size; i++) {
+    MPI_Isend(&start, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &req);
+    MPI_Wait(&req, &suc);
+  }
+  // recv & display
+  int *color = (int *) malloc(sizeof(int)*(height+1));
   for (i=0; i<width; i++) {
     int p = i%(size-1)+1;
     MPI_Irecv(color, height+1, MPI_INT, p, i, MPI_COMM_WORLD, &req);
@@ -127,15 +135,19 @@ void master(double lreal, double rreal, double dimag, double uimag, int width, i
 }
 
 void slave(double lreal, double rreal, double dimag, double uimag, int width, int height, int size, int rank, int num_thread) {
-  MPI_Status suc; MPI_Request req; int i, j; 
+  int i; int start;
   double xscale = (rreal-lreal)/(double)width;
   double yscale = (uimag-dimag)/(double)height;
-  
-#pragma omp parallel for schedule(static) num_threads(num_thread) private(j)
+  MPI_Request req; MPI_Status suc; 
+  // recv START signal
+  MPI_Irecv(&start, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
+  MPI_Wait(&req, &suc);
+
+#pragma omp parallel for schedule(static) num_threads(num_thread) private(req, suc)
   for (i=rank-1; i<width; i+=size-1) { // column partition
-    int repeats; double lengthsq, tmp;
+    int repeats, j; double lengthsq, tmp;
     Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
-    int *color = (int *) malloc(sizeof(int)*(height+1));
+    int color[height+1];
     for (j=0; j<height; j++) {
       z->real = 0.0; z->imag = 0.0;
       c->real = ((double) i*xscale) + lreal;

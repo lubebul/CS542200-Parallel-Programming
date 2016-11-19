@@ -9,15 +9,8 @@
 
 12 1 5.247856
 
-48 1 2.324916
+24 1 2.324916
 
+36 1 1.484297
 
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 29129 RUNNING AT pp19
-=   EXIT CODE: 15
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
-
-192 1 1.862948
+48 1 1.862948
