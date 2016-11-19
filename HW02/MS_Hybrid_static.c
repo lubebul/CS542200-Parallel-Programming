@@ -178,5 +178,5 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   }
 
   for (i=0; i<num_thread; i++)
-    printf("[%d] %d %lf\n", (rank-1)*num_thread+i, counts[i]*height, times[i]);
+    printf("[%d] %d %lf\n", (rank-1)*num_thread+i, counts[i], times[i]);
 }
