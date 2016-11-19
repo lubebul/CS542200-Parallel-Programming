@@ -1,85 +1,68 @@
 
-1 1 45.191758
+1 1 45.138282
 
-1 2 45.333853
+1 2 45.270257
 
-1 4 45.195237
+1 4 45.142003
 
-1 8 45.237362
+1 8 45.141698
 
-1 12 45.146449
+1 12 45.185405
 
-2 1 52.520705
+2 1 77.604779
 
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 29506 RUNNING AT pp18
+=   PID 31403 RUNNING AT pp20
 =   EXIT CODE: 255
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
+4 4 17.673481
+
+4 8 17.304241
+
+4 12 26.228403
+
+3 1 25.829684
+
+
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 6962 RUNNING AT pp17
+=   PID 26618 RUNNING AT pp19
 =   EXIT CODE: 255
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
-4 4 18.240593
-
-4 8 18.134562
-
-4 12 17.488680
-
-3 1 29.949704
-
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 20015 RUNNING AT pp16
+=   PID 26781 RUNNING AT pp16
 =   EXIT CODE: 255
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
-9 4 7.291243
+9 8 7.198187
 
-9 8 7.655854
+9 12 9.725562
 
-9 12 7.341956
-
-4 1 18.950610
-
-16 2 4.191881
-
-16 4 4.088006
-
-16 8 4.419694
+4 1 23.049414
 
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 22149 RUNNING AT pp22
+=   PID 26637 RUNNING AT pp18
 =   EXIT CODE: 255
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 17997 RUNNING AT pp21
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
+16 4 5.212506
 
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 18021 RUNNING AT pp20
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
+16 8 4.199023
+
+16 12 3.997054

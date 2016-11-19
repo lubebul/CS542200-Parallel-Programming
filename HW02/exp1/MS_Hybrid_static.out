@@ -1,31 +1,31 @@
 
-1 1 48.360564
+1 1 48.418773
 
-1 2 35.271681
+1 2 35.352046
 
-1 4 31.518257
+1 4 31.469554
 
-1 8 22.056965
+1 8 22.052621
 
-1 12 15.716383
+1 12 15.725520
 
-2 1 48.405534
-
-4 2 11.918139
+2 1 48.356896
 
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 24868 RUNNING AT pp16
-=   EXIT CODE: 1
+=   PID 929 RUNNING AT pp20
+=   EXIT CODE: 255
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
+4 4 10.660192
+
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 23087 RUNNING AT pp21
+=   PID 29124 RUNNING AT pp22
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -34,20 +34,20 @@
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 25508 RUNNING AT pp22
+=   PID 28509 RUNNING AT pp18
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
-3 1 24.219805
+3 1 24.226379
 
-9 2 4.595782
+9 2 4.607629
 
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 28392 RUNNING AT pp12
+=   PID 1151 RUNNING AT pp20
 =   EXIT CODE: 15
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -56,7 +56,7 @@
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 25568 RUNNING AT pp22
+=   PID 28586 RUNNING AT pp18
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -65,52 +65,22 @@
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 25745 RUNNING AT pp22
+=   PID 18280 RUNNING AT pp17
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
 
-4 1 16.160774
+4 1 16.218417
+
+16 2 2.511276
+
+16 4 2.263076
 
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 25369 RUNNING AT pp22
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
-
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 23039 RUNNING AT pp21
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
-
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 23040 RUNNING AT pp20
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
-
-
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 4898 RUNNING AT pp19
-=   EXIT CODE: 255
-=   CLEANING UP REMAINING PROCESSES
-=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
-===================================================================================
-
-
-===================================================================================
-=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 4957 RUNNING AT pp19
+=   PID 28659 RUNNING AT pp18
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -119,7 +89,7 @@
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 24469 RUNNING AT pp15
+=   PID 29506 RUNNING AT pp22
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
