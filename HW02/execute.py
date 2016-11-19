@@ -13,7 +13,7 @@ def testStrong(name):
     os.system('make {}'.format(name))
     sent, count = 0, 0
     PAIR = [(1,1), (1,2), (1,4), (1,8), (1,12), (2,12), (3,12), (4,12)]
-    NP = PAIR if 'OpenMP' not in name else [(1,1), (1,2), (1,4), (1,8), (1,12)]
+    NP = PAIR if 'OpenMP' not in name else [(1,1), (1,2), (1,4), (1,8), (1,12), (1,24), (1,36), (1,48)]
     NP = PAIR if 'MPI' not in name else [(1,1), (2,1), (4,1), (8,1), (12,1), (24,1), (36,1), (48,1)]
     for (node, proc), (pnode, pproc) in zip(PAIR, NP):
         job = FILE.format(node, proc, '{}_{}_{}.txt'.format(name, node, proc), CMD.format(pnode, name, pproc))
@@ -105,5 +105,5 @@ def testWeak(name):
     os.system('rm HYBRID.* *.txt')
     os.system('make clean')
 for name in NAME:
-    #testStrong(name)
-    testWeak(name)
+    testStrong(name)
+    #testWeak(name)
