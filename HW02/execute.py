@@ -43,6 +43,7 @@ def test(name):
 		count += 1
 	print('count={}, sent={}'.format(count, sent))
 	time.sleep(1)
+    time.sleep(10)
     # collect into 1 file
     cts = ''
     for node in NODE:
