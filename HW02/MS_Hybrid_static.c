@@ -66,13 +66,12 @@ void seq(double lreal, double rreal, double dimag, double uimag, int width, int 
   double yscale = (uimag-dimag)/(double)height;
   int color[width][height];
   
-#pragma omp parallel for schedule(static) num_threads(num_thread) shared(color) private(j)
-  for (i=0; i<width; i++) {
-    int repeats; double lengthsq, tmp;
-    Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl));
-    Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
-    
+#pragma omp parallel for schedule(static) num_threads(size) shared(color) collapse(2)
+  for (i=0; i<width; i++) {   
     for (j=0; j<height; j++) {
+      int repeats; double lengthsq, tmp;
+      Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl));
+      Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
       z->real = 0.0; z->imag = 0.0;
       c->real = ((double) i*xscale) + lreal;
       c->imag = ((double) j*yscale) + dimag;
