@@ -14,28 +14,28 @@ CMD = 'mpiexec -ppn {} ./{} {} -2 2 -2 2 1000 1000 disable'
 def test(name):
     os.system('make {}'.format(name))
     sent, count = 0, 0
-    NODE = [1, 2, 3, 4] if 'OpenMP' not in name else [1]
-    PROC = [1, 2, 4, 8, 12] if 'MPI' not in name else [1]
-    for node in NODE:
-        for proc in PROC:
-            job = FILE.format(node, proc, '{}_{}_{}.txt'.format(name, node, proc), CMD.format(node, name, proc))
-            jobname = 'job_{}_{}_{}.txt'.format(name, node, proc)
-            with open(jobname, 'w+') as f:
-                f.write(job)
-            # check current executed jobs
+    PAIR = [(1,1), (1,2), (1,4), (1,8), (1,12), (2,12), (3,12), (4,12)]
+    NP = PAIR if 'OpenMP' not in name else [(1,1), (1,2), (1,4), (1,8), (1,12), (1,24), (1,36), (1,48)]
+    NP = PAIR if 'MPI' not in name else [(1,1), (2,1), (4,1), (8,1), (12,1), (24,1), (36,1), (48,1)]
+    for (node, pair), (pnode, ppair) in zip(PAIR, NP):
+        job = FILE.format(node, proc, '{}_{}_{}.txt'.format(name, node, proc), CMD.format(pnode, name, pproc))
+        jobname = 'job_{}_{}_{}.txt'.format(name, node, proc)
+        with open(jobname, 'w+') as f:
+            f.write(job)
+        # check current executed jobs
+        count = 0
+        for f in os.listdir('../'):
+            if 'HYBRID.e' in f:
+                count += 1
+        while sent-count > 7:
             count = 0
-            for f in os.listdir('../'):
+            for f in os.listdir('.'):
                 if 'HYBRID.e' in f:
                     count += 1
-            while sent-count > 7:
-                count = 0
-                for f in os.listdir('.'):
-                    if 'HYBRID.e' in f:
-                        count += 1
-		print('count={}, sent={}'.format(count, sent))
-		time.sleep(1)
-            os.system('qsub {}'.format(jobname))
-            sent += 1
+	    print('count={}, sent={}'.format(count, sent))
+	    time.sleep(1)
+        os.system('qsub {}'.format(jobname))
+        sent += 1
     while sent != count:
 	count = 0
 	for f in os.listdir('.'):
@@ -46,11 +46,10 @@ def test(name):
     time.sleep(10)
     # collect into 1 file
     cts = ''
-    for node in NODE:
-        for proc in PROC:
-            with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
-                data = fin.read()
-            cts = '{}\n{}'.format(cts, data)
+    for node, proc in PAIR:
+        with open('{}_{}_{}.txt'.format(name, node, proc), 'r') as fin:
+            data = fin.read()
+        cts = '{}\n{}'.format(cts, data)
     with open('{}.out'.format(name), 'w+') as f:
         f.write(cts)
     os.system('rm HYBRID.* *.txt')
