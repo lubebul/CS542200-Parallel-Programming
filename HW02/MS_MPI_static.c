@@ -139,9 +139,9 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
 	repeats++;
       }
       color[j] = repeats;
+      time += MPI_Wtime()-st;
     }
     color[height] = i;
-    time += MPI_Wtime()-st;
     MPI_Isend(&color[0], height+1, MPI_INT, 0, i, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
     count += 1;
