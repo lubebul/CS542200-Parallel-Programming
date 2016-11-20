@@ -1,0 +1,70 @@
+
+1 1 45.354369
+
+1 2 33.072730
+
+1 4 29.561031
+
+1 8 20.551439
+
+1 12 14.685981
+
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 7507 RUNNING AT pp21
+=   EXIT CODE: 139
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Segmentation fault (signal 11)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
+
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 7578 RUNNING AT pp21
+=   EXIT CODE: 139
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Segmentation fault (signal 11)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
+
+[24] 28000 0.028167
+[25] 28000 0.163992
+[26] 28000 1.313941
+[27] 28000 1.685314
+[28] 28000 3.944582
+[29] 28000 5.368560
+[30] 28000 4.000053
+[31] 28000 0.176643
+[32] 28000 0.000877
+[33] 27000 0.000302
+[34] 27000 0.004251
+[35] 27000 0.000426
+[12] 28000 0.055238
+[13] 28000 0.187953
+[14] 28000 1.304943
+[15] 28000 1.662711
+[16] 28000 3.929569
+[17] 28000 5.373486
+[18] 28000 4.052355
+[19] 28000 0.291141
+[20] 28000 0.004527
+[21] 27000 0.009422
+[22] 27000 0.004541
+[23] 27000 0.000239
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 12549 RUNNING AT pp16
+=   EXIT CODE: 139
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Segmentation fault (signal 11)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
