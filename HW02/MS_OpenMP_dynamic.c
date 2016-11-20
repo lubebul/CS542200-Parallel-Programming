@@ -59,7 +59,7 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
     times[i] = 0.0;
   }
   
-#pragma omp parallel for schedule(dynamic) num_threads(size) shared(color, counts) collapse(2)
+#pragma omp parallel for schedule(dynamic) num_threads(size) shared(color, counts, xscale, yscale, times) collapse(2)
   for (i=0; i<width; i++) {    
     for (j=0; j<height; j++) {
       clock_t st, ed;
@@ -83,6 +83,7 @@ void parallel(double lreal, double rreal, double dimag, double uimag, int width,
       ed = clock();
       times[id] += (double)(ed-st)/CLOCKS_PER_SEC;
       counts[id]+=1;
+      free(z); free(c);
     }
   }
   if (Xflag) {
