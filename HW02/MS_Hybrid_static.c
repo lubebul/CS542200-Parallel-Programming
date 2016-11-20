@@ -150,8 +150,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
 #pragma omp parallel for schedule(static) num_threads(num_thread) private(req, suc)
   for (i=rank-1; i<width; i+=size-1) { // column partition
     int repeats, j; double lengthsq, tmp;
-    clock_t st, ed;
-    st = clock();
+    double st = omp_get_wtime();
     Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
     int color[height+1];
     for (j=0; j<height; j++) {
@@ -169,7 +168,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
       color[j] = repeats;
       int id = omp_get_thread_num();
       ed = clock();
-      times[id] += (double)(ed-st)/CLOCKS_PER_SEC;
+      times[id] += omp_get_wtime()-st;
       counts[id] += 1;
     }
     color[height] = i;

@@ -10,10 +10,10 @@ import re
 def plot(): 
     p1 = figure(title='#points')
     p2 = figure(title='execution time')
-    eps = [[0, 0.2], [0.4, 0.6], [0.8,1]]
+    eps = [[0, 0.15], [0.35, 0.45], [0.65,0.75]]
     colors = [['greenyellow', 'darkgreen'], ['lightblue', 'darkblue'], ['pink', 'red']]
-    for c0, ver in zip(range(2), ['MPI', 'OpenMP']):
-        for c1, tp in zip(range(2), ['static', 'dynamic']):
+    for c0, ver in zip(range(3), ['MPI', 'OpenMP', 'Hybrid']):
+        for c1, tp in zip(range(3), ['static', 'dynamic']):
             with open('MS_{}_{}_load.out'.format(ver, tp), 'r') as f:
                 data = f.read()
             ids = [int(x) for x in re.findall('\[(\d*)\] \d* \d*.\d*', data)]
