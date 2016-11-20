@@ -157,7 +157,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   }
   int color[height+1];
   while(suc.MPI_TAG == NEXT) {
-#pragma omp parallel for schedule(dynamic) shared(color, counts, times)
+#pragma omp parallel for schedule(dynamic) shared(color, counts, times) num_threads(num_thread)
     for (j=0; j<height; j++) {
       clock_t st, ed;
       st = clock();
