@@ -122,10 +122,11 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   Cmpl *z = (Cmpl *) malloc(sizeof(Cmpl)); Cmpl *c = (Cmpl *) malloc(sizeof(Cmpl));
   int color[height+1];
   int count = 0;
-  double st = MPI_Wtime();
+  double time = 0.0;
   
   for (i=rank-1; i<width; i+=size-1) { // column partition
     for (j=0; j<height; j++) {
+      double st = MPI_Wtime();
       z->real = 0.0; z->imag = 0.0;
       c->real = ((double) i*xscale) + lreal;
       c->imag = ((double) j*yscale) + dimag;
@@ -140,10 +141,11 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
       color[j] = repeats;
     }
     color[height] = i;
+    time += MPI_Wtime()-st;
     MPI_Isend(&color[0], height+1, MPI_INT, 0, i, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
     count += 1;
   }
 
-  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);
+  printf("[%d] %d %lf\n", rank, count*height, time);
 }

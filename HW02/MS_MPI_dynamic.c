@@ -144,13 +144,14 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   int color[height+1] ;
   int row;
   int count = 0;
-  double st = MPI_Wtime();
+  double time = 0.0;
   
   MPI_Irecv(&row, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
   MPI_Wait(&req, &suc);
   while(suc.MPI_TAG == NEXT) {
     count += 1;
     for (j=0; j<height; j++) {
+      double st = MPI_Wtime();
       z->real = 0.0; z->imag = 0.0;
       c->real = ((double) row*xscale) + lreal;
       c->imag = ((double) j*yscale) + dimag;
@@ -163,6 +164,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
 	repeats++;
       }
       color[j] = repeats;
+      time += MPI_Wtime()-st;
     }
     color[height] = row;
     MPI_Isend(&color[0], height+1, MPI_INT, 0, RECV, MPI_COMM_WORLD, &req);
@@ -173,5 +175,5 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
     MPI_Wait(&req, &suc);
   }
 
-  printf("[%d] %d %lf\n", rank, count*height, MPI_Wtime()-st);
+  printf("[%d] %d %lf\n", rank, count*height, time);
 }
