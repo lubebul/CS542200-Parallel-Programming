@@ -10,7 +10,7 @@ import re
 
 def plot(title): 
     p = figure(title=title)
-    colors = [['green', 'darkgreen'], ['blue', 'darkblue'], ['pink', 'red']]
+    colors = [['greenyellow', 'darkgreen'], ['lightblue', 'darkblue'], ['pink', 'red']]
     xs = [80, 160, 320, 640, 1280]
     for c0, ver in zip(range(3), ['MPI', 'OpenMP', 'Hybrid']):
         for c1, tp in zip(range(2), ['static', 'dynamic']):
