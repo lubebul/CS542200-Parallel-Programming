@@ -167,7 +167,6 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
       }
       color[j] = repeats;
       int id = omp_get_thread_num();
-      ed = clock();
       times[id] += omp_get_wtime()-st;
       counts[id] += 1;
     }
