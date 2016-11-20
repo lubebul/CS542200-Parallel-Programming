@@ -147,7 +147,7 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
   for (i=0; i<num_thread; i++) {
     counts[i] = 0; times[i] = 0.0;
   }
-#pragma omp parallel for schedule(static) num_threads(num_thread) private(req, suc)
+#pragma omp parallel for schedule(static) num_threads(num_thread) private(req, suc) shared(times, counts)
   for (i=rank-1; i<width; i+=size-1) { // column partition
     int repeats, j; double lengthsq, tmp;
     double st = omp_get_wtime();
@@ -166,10 +166,10 @@ void slave(double lreal, double rreal, double dimag, double uimag, int width, in
 	repeats++;
       }
       color[j] = repeats;
-      int id = omp_get_thread_num();
-      times[id] += omp_get_wtime()-st;
-      counts[id] += 1;
     }
+    int id = omp_get_thread_num();
+    times[id] += omp_get_wtime()-st;
+    counts[id] += 1;
     color[height] = i;
     MPI_Isend(&color[0], height+1, MPI_INT, 0, i, MPI_COMM_WORLD, &req);
     MPI_Wait(&req, &suc);
