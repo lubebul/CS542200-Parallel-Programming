@@ -3,8 +3,9 @@ CCFLAGS			:= -O3 -march=native -Wall -std=gnu11
 MPICC			:= mpicc
 PFLAGS			:= -lpthread
 
-IN = In_5_7
+IN = In_1000_5000
 OUT = out.txt
+SRC = 4
 
 # SSSP_MPI_sync SSSP_MPI_async
 all: SSSP_Pthread
@@ -16,6 +17,7 @@ SSSP_MPI_sync: SSSP_MPI_sync.c
 SSSP_MPI_async: SSSP_MPI_async.c
 	$(MPICC) $(CCFLAGS) -o $@ $?
 run:
-	./SSSP_Pthread 4 $(IN) $(OUT) 1
+	./SSSP_Pthread 4 $(IN) $(OUT) $(SRC)
+	./judge_hw3 $(IN) $(OUT) $(SRC)
 clean:
-	rm -f SSSP_Pthread SSSP_MPI_sync SSSP_MPI_async
+	rm -f SSSP_Pthread SSSP_MPI_sync SSSP_MPI_async $(OUT)
