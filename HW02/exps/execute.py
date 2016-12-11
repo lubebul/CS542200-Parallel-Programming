@@ -200,4 +200,7 @@ def testBest(name='MS_Hybrid_dynamic'):
     os.system('rm HYBRID.* *.txt')
     os.system('make clean')
 
+for name in NAME:
+    testStrong(name)
+    testWeak(name)
 testBest()
