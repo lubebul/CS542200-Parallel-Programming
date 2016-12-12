@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <pthread.h>
+#include <time.h>
 
 #define INF 1 << 30
 
@@ -44,6 +45,9 @@ int main(int argc, char** argv) {
   pthread_t threads[num_thread];
   thread_param_t *params = malloc(sizeof(thread_param_t)*num_thread);
   pthread_mutex_init (&mutex, NULL);
+
+  clock_t st, ed;
+  st = clock();
   // Dijkstra
   for (k=0; k<num_vtx; k++) {
     min = INF; cur = -1;
@@ -62,6 +66,9 @@ int main(int argc, char** argv) {
     }
     for(i=0; i<num_thread; i++) pthread_join(threads[i], NULL);
   }
+  ed = clock();
+  printf("%lf\n", (double)(ed-st)/CLOCKS_PER_SEC);
+  
   pthread_mutex_destroy(&mutex);
 
   // write output
