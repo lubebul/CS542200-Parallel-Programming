@@ -33,9 +33,13 @@ int main(int argc, char** argv) {
 
   int rank, size;
   MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+  double st, ed;
+  if (rank == 0) st = MPI_Wtime();
   Moore(rank, nodes[rank], src_vtx);
-  
+  if (rank == 0) {
+    ed = MPI_Wtime();
+    printf("%d\n", ed-st);
+  }
   if (rank == src_vtx) {
     MPI_Status suc;
     int *L = malloc(sizeof(int)*num_vtx);
