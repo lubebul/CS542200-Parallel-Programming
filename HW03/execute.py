@@ -28,7 +28,7 @@ def testMPI(name):
     NP = [(1,1), (1,2), (1,4), (1,8), (1,12), (2,12), (3,12), (4,12)]
     for node, ppn in NP:
         CMD = EXE[0].format(NAME[0], PS[0], FS[0], OUT, 4)
-        fname = 'job_p_{}.sh'.format(i)
+        fname = 'job_{}_{}.sh'.format(node, ppn)
         with open(fname, 'w+') as f:
             f.write(FILE.format(node, ppn, 'mpi_{}_{}.txt'.format(node, ppn), CMD))
         # check current executed jobs
@@ -54,6 +54,7 @@ def testMPI(name):
 	time.sleep(1)
     time.sleep(10)
     # collect results
+    cts = ''
     for node, ppn in NP:
         with open('mpi_{}_{}.txt'.format(node, ppn), 'r') as fin:
             data = fin.read()
