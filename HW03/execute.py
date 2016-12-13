@@ -27,7 +27,7 @@ def testMPI(name):
     # fixed core
     NP = [(1,1), (1,2), (1,4), (1,8), (1,12), (2,12), (3,12), (4,12)]
     for node, ppn in NP:
-        CMD = EXE[0].format(NAME[0], PS[0], FS[0], OUT, 4)
+        CMD = EXE[1].format(NAME[0], PS[0], FS[0], OUT, 4)
         fname = 'job_{}_{}.sh'.format(node, ppn)
         with open(fname, 'w+') as f:
             f.write(FILE.format(node, ppn, 'mpi_{}_{}.txt'.format(node, ppn), CMD))
@@ -69,7 +69,7 @@ def testPthread():
     node, ppn = 1, 12
     ps = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
     for i in ps:
-        CMD = EXE[1].format(name, i, FS[1], OUT, 4)
+        CMD = EXE[0].format(NAME[0], i, FS[1], OUT, 4)
         fname = 'job_p_{}.sh'.format(i)
         with open(fname, 'w+') as f:
             f.write(FILE.format(node, ppn, 'p_{}.txt'.format(i), CMD))
@@ -106,7 +106,7 @@ def testPthread():
     os.system('rm batch.* *.txt *.sh')
 
 os.system('make')
-#testPthread()
+testPthread()
 testMPI(NAME[1])
 testMPI(NAME[2])
 os.system('make clean')
