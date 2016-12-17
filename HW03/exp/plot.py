@@ -32,7 +32,7 @@ def grabMPI(fname, vsize, esize):
     with open(fname, 'r') as f:
         data = f.read()
     lines = data.split('\n')
-    ns, comms, comps, syncs, ios, cts = [], [], [], [], [], []
+    ns, comms, comps, syncs, ios, cts, tots = [], [], [], [], [], [], []
     n = 0
     while n < len(lines):
         s = lines[n].split(' ')
@@ -43,13 +43,15 @@ def grabMPI(fname, vsize, esize):
         for j in range(n, n+vsize):
             ss = lines[j].split(' ')
             ns.append(N)
-            comms.append(float(ss[1]))
-            comps.append(float(ss[2]))
-            syncs.append(float(ss[3]))
-            ios.append(float(ss[4]))
+            comm, comp, sync, io = float(ss[1]), float(ss[2]), float(ss[3]), float(ss[4])
+            comms.append(comm)
+            comps.append(comp)
+            syncs.append(sync)
+            ios.append(io)
+            tots.append(comm+comp+sync+io)
             cts.append(int(ss[5]))
         n += vsize+1
-    return pd.DataFrame({'N':[vsize for i in range(len(ns))], 'E':[esize for i in range(len(ns))], '#core*#ppn':ns, 'communicate':comms, 'compute':comps, 'synchronous':syncs, 'i/o':ios, 'count':cts})
+    return pd.DataFrame({'N':[vsize for i in range(len(ns))], 'E':[esize for i in range(len(ns))], '#core*#ppn':ns, 'communicate':comms, 'compute':comps, 'synchronous':syncs, 'i/o':ios, 'total':tots, '#msg':cts})
 
 
 def PStrong(df):
@@ -117,7 +119,7 @@ def PLoad(df):
 
 def MPILoad(df, sas):
     i = 0
-    ps = {'communicate':None, 'compute':None, 'synchronous':None, 'i/o':None}
+    ps = {'communicate':None, 'compute':None, 'synchronous':None, 'i/o':None, 'total':None, '#msg':None}
     for n, e in zip([128,256,256,256], [5000, 5000, 10000, 15000]):
         ndf = df[df['N']==n]
         ndf = ndf[ndf['E']==e]
@@ -125,14 +127,14 @@ def MPILoad(df, sas):
             continue
         cp = list(sorted(ndf['#core*#ppn'].values))[-1]
         thdf = ndf[ndf['#core*#ppn']==cp]
-        for term in ['communicate', 'compute', 'synchronous', 'i/o']:
+        for term in ['communicate', 'compute', 'synchronous', 'i/o', 'total', '#msg']:
             values = list(reversed(sorted(thdf[term].values)))
             t = ps[term]
             t = figure(title='{}'.format(term)) if t is None else t
             t.line(range(1, len(values)+1), values, legend='#vtx={}, #edge={}'.format(n,e), line_color=colors[i][1], line_width=2)
             t.circle(range(1, len(values)+1), values, color=colors[i][0], size=5)
             t.xaxis.axis_label = 'process-id'
-            t.yaxis.axis_label = 'time(s)'
+            t.yaxis.axis_label = 'time(s)' if term != '#msg' else 'count'
             ps[term] = t
         i += 1
     p = VBox(*(ps.values()))
@@ -155,7 +157,7 @@ df.to_csv('pthread.csv', ignore_index=True)
 #MPI
 for sas in ['sync', 'async']:
     df = None
-    for i in [4,5]:
+    for i in [0,1,4,5]:
         p = '{}_SSSP_MPI_{}.out'.format(i, sas)
         tdf = grabMPI(p, Nsize[i], Esize[i])
         df = tdf if df is None else pd.concat([df, tdf])
