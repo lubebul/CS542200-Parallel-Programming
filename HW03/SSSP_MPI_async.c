@@ -15,6 +15,7 @@ typedef struct neighbor {
 } neighbor;
 
 double comm, comp, sync, io;
+int msg;
 int *Last;
 void print(int *L, int src, int cur, FILE *fout);
 neighbor **add(neighbor **nodes, int a, int b, int weight, int src_vtx);
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
   MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   // measure time
   double st, ed;
-  comm = comp = sync = io = 0.0;
+  comm = comp = sync = io = 0.0; msg = 0;
   int num_vtx, num_edge, i, a, b, w;
   int src_vtx = atoi(argv[4]); src_vtx -= 1;
   // read input
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
   
   MPI_Finalize();
 
-  printf("[%d] %lf %lf %lf %lf\n", rank, comm, comp, sync, io);
+  printf("[%d] %lf %lf %lf %lf %d\n", rank, comm, comp, sync, io, msg);
   
   return 0;
 }
@@ -95,6 +96,7 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
       if (head->node < rank) color = 0;
       t = MPI_Wtime();
       MPI_Send(&d, 1, MPI_INT, head->node, UPDATE, MPI_COMM_WORLD);
+      msg += 1;
       tmp += MPI_Wtime()-t;
       head = head->next;
     }
@@ -119,6 +121,7 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
 	  // comm
 	  t = MPI_Wtime();
 	  MPI_Send(&d, 1, MPI_INT, head->node, UPDATE, MPI_COMM_WORLD);
+	  msg += 1;
 	  tmp += MPI_Wtime()-t;
 	  
 	  head = head->next;
@@ -128,6 +131,7 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
 	// comm
 	t = MPI_Wtime();
 	MPI_Send(&color, 1, MPI_INT, (rank+1)%size, TERMINATE, MPI_COMM_WORLD);
+	msg += 1;
 	tmp += MPI_Wtime()-t;
 	
 	passed = 1; once = 1;}
@@ -138,6 +142,7 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
 	// comm
 	t = MPI_Wtime();
 	MPI_Send(&color, 1, MPI_INT, (rank+1)%size, TERMINATE, MPI_COMM_WORLD);
+	msg += 1;
 	tmp += MPI_Wtime()-t;
 
 	passed = 1;}
@@ -146,12 +151,14 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
 	  if(rank<size-1) {
 	    t = MPI_Wtime();
 	    MPI_Send(&token, 1, MPI_INT, rank+1, TERMINATE, MPI_COMM_WORLD);
+	    msg += 1;
 	    tmp += MPI_Wtime()-t;
 	  }
 	  // send parent
 	  if (rank != src_vtx) {
 	    t = MPI_Wtime();
 	    MPI_Send(&L, 1, MPI_INT, src_vtx, COLLECT, MPI_COMM_WORLD);
+	    msg += 1;
 	    tmp += MPI_Wtime()-t;
 
 	    done = 1;}
@@ -159,6 +166,7 @@ void Moore(int rank, neighbor *node, int src_vtx, int size) {
 	if (passed!=2) {
 	  t = MPI_Wtime();
 	  MPI_Send(&token, 1, MPI_INT, (rank+1)%size, TERMINATE, MPI_COMM_WORLD);
+	  msg += 1;
 	  tmp += MPI_Wtime()-t;
 
 	  passed++; if(!token) passed = 0;}
