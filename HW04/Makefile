@@ -12,8 +12,9 @@ MPILIBS                 := -I/opt/mpich-3.2-gcc/include -L/opt/mpich-3.2-gcc/lib
 EXES                    := block_FW seq_FW HW4_cuda HW4_openmp HW4_mpi
 
 
+BASE = block_FW
 EXE = HW4_cuda
-I = 2
+I = 5
 IN = testcase/in$(I)
 OUT = out
 GT = testcase/ans$(I)
@@ -39,8 +40,8 @@ HW4_openmp: HW4_104062703_openmp.cu
 HW4_mpi: HW4_104062703_mpi.cu
 	$(NVCC) $(NVFLAGS) $(MPILIBS) -o $@ $?
 run:
-	make seq_FW
-	make HW4_cuda
-	time ./seq_FW $(IN) $(OUT) $(B)
+	make $(BASE)
+	make $(EXE)
+	time ./$(BASE) $(IN) $(OUT) $(B)
 	time ./$(EXE) $(IN) $(OUT) $(B)
 	cmp $(OUT) $(GT)
