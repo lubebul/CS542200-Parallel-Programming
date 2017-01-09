@@ -3,9 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define min(x,y) (x)<(y)?(x):(y)
+#define BSIZE 32
 #define HANDLE_ERROR(status) {if (status != cudaSuccess) { fprintf(stderr, "%s failed  at line %d \nError message: %s \n", __FILE__, __LINE__ ,cudaGetErrorString(status)); exit(EXIT_FAILURE);}}
-
 const int INF = 10000000;
 
 int init_device();
@@ -75,51 +74,78 @@ __host__ void block_FW(int n, int B) {
   // malloc device memory
   int **dev_Dist;
   int **tmp = (int **)malloc(sizeof(int *)*n);
-  cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n);
+  HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
-    cudaMalloc((void **) &tmp[i], sizeof(int)*n);
-    cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice);
+    HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
+    HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
   }
-  cudaMemcpy(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice);
+  HANDLE_ERROR(cudaMemcpy(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
   // clipping
-  B = min(B, n);
+  B = min(B, BSIZE);
   int round = ceil(n, B);
-  dim3 grid (round, round, 1);
+  dim3 grid (round, round);
   dim3 block (B, B, 1);
-  for (int r = 0; r < round; ++r) {
+  
+  for (int r = 0; r < round; r++) {
     /* Phase 1*/
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, 1, 1);
+    cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, r, r);
     cudaDeviceSynchronize();
+    HANDLE_ERROR(cudaPeekAtLastError());
     
     /* Phase 2*/
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r, 0, r, 1);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r,r+1, round-r-1, 1);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r, 1, r);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, r, 1, round-r-1);
+    if (r > 0) {
+      cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, 0, r-1);
+      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, r, r);
+    }
+    cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, r+1, round-1);
+    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, r, r);
     cudaDeviceSynchronize();
+    HANDLE_ERROR(cudaPeekAtLastError());
     
     /* Phase 3*/
-    cal <<<grid, block>>> (B, n, dev_Dist, r, 0, 0, r, r);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r+1, round-r-1, r);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, 0, r, round-r-1);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, r+1, round-r-1, round-r-1);
+    if (r > 0) {
+      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, 0, r-1);
+      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, r+1, round-1);
+      cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, 0, r-1);
+    }
+    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, r+1, round-1);
     cudaDeviceSynchronize();
+    HANDLE_ERROR(cudaPeekAtLastError());
   }
   // copy result
   cudaMemcpy(tmp, dev_Dist, sizeof(int *)*n, cudaMemcpyDeviceToHost);
   for(int i=0; i<n; i++) cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost);
 }
 
-__global__ void cal(int B, int n, int **dev_Dist, int Round, int block_start_x, int block_start_y, int block_width, int block_height) {
-  int block_end_x = block_start_x+block_height;
-  int block_end_y = block_start_y+block_width;
-
-  int a = min(blockIdx.x*B+threadIdx.x, n-1);
-  int b = min(blockIdx.y*B+threadIdx.y, n-1);
-
-  if ((block_start_x <= blockIdx.x && blockIdx.x <block_end_x) && (block_start_y <= blockIdx.y && blockIdx.y <block_end_y)) {
-      for (int k = Round*B; k < (Round+1)*B && k<n; k++) {
-        atomicMin(&dev_Dist[a][b], dev_Dist[a][k]+dev_Dist[k][b]);
-      }
+__global__ void cal(int B, int n, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed) {
+  int x = threadIdx.x; int y = threadIdx.y;
+  int a = blockIdx.x*B + x; int b = blockIdx.y*B + y;
+  
+  if ((bx_st*B<=a && a<min((bx_ed+1)*B,n)) && (by_st*B<=b && b<min((by_ed+1)*B,n))) {\
+    #pragma unroll
+    for (int k = Round*B; k < min((Round+1)*B,n); k++) {
+      atomicMin(&dev_Dist[a][b], dev_Dist[a][k]+dev_Dist[k][b]);
+      __syncthreads();
     }
+    /*
+    __shared__ int d[BSIZE][BSIZE];
+    __shared__ int AK[BSIZE][BSIZE];
+    __shared__ int KB[BSIZE][BSIZE];
+    d[x][y] = dev_Dist[a][b];
+    if (Round*B+y < n) AK[x][y] = dev_Dist[a][Round*B+y]; else AK[x][y] = INF;
+    if (Round*B+x < n) KB[x][y] = dev_Dist[Round*B+x][b]; else KB[x][y] = INF;
+    __syncthreads();
+
+    int d1, d2;
+    #pragma unroll
+    for (int k = Round*B; k < min((Round+1)*B,n); k++) {
+      if (Round == blockIdx.y) d1 = d[x][k%B]; else d1 = AK[x][k%B];
+      if (Round == blockIdx.x) d2 = d[k%B][y]; else d2 = KB[k%B][y];
+      d[x][y] = min(d[x][y], d1+d2);
+      __syncthreads();
+    }
+    dev_Dist[a][b] = d[x][y];
+    __syncthreads();
+    */
+  }
 }

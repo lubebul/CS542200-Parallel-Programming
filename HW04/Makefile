@@ -13,11 +13,11 @@ EXES                    := block_FW seq_FW HW4_cuda HW4_openmp HW4_mpi
 
 
 EXE = HW4_cuda
-I = 3
+I = 2
 IN = testcase/in$(I)
 OUT = out
 GT = testcase/ans$(I)
-B = 64
+B = 32
 
 all: $(EXES)
 
