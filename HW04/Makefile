@@ -13,8 +13,8 @@ EXES                    := block_FW seq_FW HW4_cuda HW4_openmp HW4_mpi
 
 
 BASE = block_FW
-EXE = HW4_cuda
-I = 5
+EXE = HW4_openmp
+I = 4
 IN = testcase/in$(I)
 OUT = out
 GT = testcase/ans$(I)
@@ -23,7 +23,7 @@ B = 32
 all: $(EXES)
 
 clean:
-	rm -f $(EXES) $(OUT)
+	rm -f $(EXES) $(OUT) tmp*
 
 block_FW: block_FW.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $?
@@ -40,8 +40,6 @@ HW4_openmp: HW4_104062703_openmp.cu
 HW4_mpi: HW4_104062703_mpi.cu
 	$(NVCC) $(NVFLAGS) $(MPILIBS) -o $@ $?
 run:
-	make $(BASE)
 	make $(EXE)
-	time ./$(BASE) $(IN) $(OUT) $(B)
 	time ./$(EXE) $(IN) $(OUT) $(B)
 	cmp $(OUT) $(GT)

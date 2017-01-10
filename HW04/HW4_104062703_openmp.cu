@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <cuda_runtime.h>
 #include <cuda.h>
 #include <stdio.h>
@@ -14,8 +15,10 @@ void print(int **dist, int n);
 int ceil(int a, int b);
 
 int init_device();
-__global__ void cal(int B, int n, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed);
-__host__ void block_FW(int n, int B);
+__global__ void cal(int B, int n, int bst, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed);
+__host__ void block_FW(int **Dist, int n, int B);
+void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed);
+void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed);
 
 int n, m;
 int **Dist;
@@ -23,8 +26,8 @@ int **Dist;
 int main(int argc, char* argv[]) {
   input(argv[1]);
   int B = atoi(argv[3]);
-  block_FW(n, B);
-
+  block_FW(Dist, n, B);
+  
   output(argv[2]);
 
   return 0;
@@ -34,7 +37,7 @@ int init_device() {
   int iDeviceCount = 0;
   cudaGetDeviceCount(&iDeviceCount);
   for (int i=0; i<iDeviceCount; i++) HANDLE_ERROR(cudaSetDevice(i));
-  return 0;
+  return iDeviceCount;
 }
 void input(char *inFileName) {
   FILE *infile = fopen(inFileName, "r");
@@ -67,13 +70,30 @@ void print(int **dist, int n) {
   printf("#########################\n");
 }
 int ceil(int a, int b) { return (a+b-1)/b; }
+void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed) {
+  for(int i=0; i<n; i++)
+    if (i < st || i>=ed) {
+      HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+      HANDLE_ERROR(cudaMemcpy(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
+    }
+}
+void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed) {
+  for (int i=st; i<ed; i++) {
+    cudaMemcpy(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost);
+    cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost);
+  }
+}
 
-__host__ void block_FW(int n, int B) {
+__host__ void block_FW(int **Dist, int n, int B) {
   // init GPU
-  init_device();
+  int gnum = init_device();
+  printf("gpu num=%d\n", gnum);
+#pragma omp parallel num_threads(gnum)
+{
+  int gid = omp_get_thread_num();
+  cudaSetDevice(gid);  
   // malloc device memory
-  int **dev_Dist;
-  int **tmp = (int **)malloc(sizeof(int *)*n);
+  int **dev_Dist; int **tmp = (int **)malloc(sizeof(int *)*n);
   HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
     HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
@@ -83,38 +103,42 @@ __host__ void block_FW(int n, int B) {
   
   B = min(B, BSIZE);
   int round = ceil(n, B);
-  dim3 grid (round, round);
+  int gsize = ceil(round, gnum);
+  int psize = gsize*B;
+  int bst = gid*gsize; int st = psize*gid; int ed = min(psize*(gid+1), n);
+  dim3 grid (gsize, round);
   dim3 block (B, B, 1);
   
   for (int r = 0; r < round; r++) {
     // Phase 1
-    cal <<<grid, block>>>(B, n, dev_Dist, r, r, r, r, r);
-    
+    cal <<<grid, block>>>(B, n, bst, dev_Dist, r, r, r, r, r);
+  #pragma omp barrier
+    copyToHost(Dist, dev_Dist, tmp, n, st, ed); copyFromHost(Dist, dev_Dist, tmp, n, st, ed);
+      
     // Phase 2
     if (r > 0) {
-      cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, 0, r-1);
-      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, r, r);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r, r, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, r, r);
     }
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r, r, r+1, round-1);
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, r, r);
-    
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
+  #pragma omp barrier
+    copyToHost(Dist, dev_Dist, tmp, n, st, ed); copyFromHost(Dist, dev_Dist, tmp, n, st, ed);
     // Phase 3
     if (r > 0) {
-      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, 0, r-1);
-      cal <<<grid, block>>> (B, n, dev_Dist, r, 0, r-1, r+1, round-1);
-      cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, r+1, round-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, 0, r-1);
     }
-    cal <<<grid, block>>> (B, n, dev_Dist, r, r+1, round-1, r+1, round-1);
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
+  #pragma omp barrier
+    copyToHost(Dist, dev_Dist, tmp, n, st, ed); copyFromHost(Dist, dev_Dist, tmp, n, st, ed);
   }
-  // copy result
-  cudaMemcpy(tmp, dev_Dist, sizeof(int *)*n, cudaMemcpyDeviceToHost);
-  for(int i=0; i<n; i++) cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost);
-  for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]);
-  cudaFree(dev_Dist);
-  free(tmp);
+  for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]); cudaFree(dev_Dist); free(tmp);
 }
-__global__ void cal(int B, int n, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed) {
-  int bx = blockIdx.x; int by = blockIdx.y;
+}
+__global__ void cal(int B, int n, int bst, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed) {
+  int bx = bst+blockIdx.x; int by = blockIdx.y;
   int tx = threadIdx.x; int ty = threadIdx.y;
   int a = bx*B+tx; int b = by*B+ty;
   // not in range
