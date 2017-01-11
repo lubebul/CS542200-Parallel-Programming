@@ -77,9 +77,9 @@ __host__ void block_FW(int n, int B) {
   HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
     HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
-    HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+    HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
   }
-  HANDLE_ERROR(cudaMemcpy(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
+  HANDLE_ERROR(cudaMemcpyAsync(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
   
   B = min(B, BSIZE);
   int round = ceil(n, B);

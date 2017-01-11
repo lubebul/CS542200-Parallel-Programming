@@ -1,4 +1,4 @@
-#include <omp.h>
+#include <mpi.h>
 #include <cuda_runtime.h>
 #include <cuda.h>
 #include <stdio.h>
@@ -121,9 +121,9 @@ __host__ void block_FW(int **Dist, int n, int B) {
   // init GPU
   int gnum = init_device();
   printf("gpu num=%d\n", gnum);
-#pragma omp parallel num_threads(gnum)
-{
-  int gid = omp_get_thread_num();
+  int gid, size;
+  MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &gid);
+  
   cudaSetDevice(gid);  
   cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
   // malloc device memory
@@ -147,7 +147,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
     // Phase 1
     cal <<<grid, block, 0, stream[0]>>>(B, n, bst, dev_Dist, r, r, r, r, r);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
-  #pragma omp barrier
+    MPI_Barrier(MPI_COMM_WORLD);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
       
     // Phase 2
@@ -158,7 +158,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
     cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2); 
-  #pragma omp barrier
+    MPI_Barrier(MPI_COMM_WORLD);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2);
     // Phase 3
     if (r > 0) {
@@ -168,7 +168,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
     }
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3); 
-  #pragma omp barrier
+    MPI_Barrier(MPI_COMM_WORLD);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);
   }
   for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]); cudaFree(dev_Dist); free(tmp);

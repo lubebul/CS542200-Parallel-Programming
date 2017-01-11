@@ -8,17 +8,16 @@ NVFLAGS                 := -arch=sm_20 -O3 -D_FORCE_INLINES
 
 OMPFLAGS                := -fopenmp
 MPILIBS                 := -I/opt/mpich-3.2-gcc/include -L/opt/mpich-3.2-gcc/lib -lmpich
-
 EXES                    := block_FW seq_FW HW4_cuda HW4_openmp HW4_mpi
 
 
 BASE = block_FW
-EXE = HW4_openmp
-I = 4
+EXE = HW4_mpi
+I = 3
 IN = testcase/in$(I)
 OUT = out
 GT = testcase/ans$(I)
-B = 32
+B = 64
 
 all: $(EXES)
 
