@@ -12,8 +12,8 @@ EXES                    := block_FW.exe seq_FW.exe HW4_cuda.exe HW4_openmp.exe H
 
 
 BASE = block_FW.exe
-EXE = HW4_mpi.exe
-I = 3
+EXE = HW4_openmp.exe
+I = 5
 IN = testcase/in$(I)
 OUT = out
 GT = testcase/ans$(I)

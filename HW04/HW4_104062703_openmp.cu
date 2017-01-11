@@ -81,6 +81,7 @@ void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, 
           HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
           HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice, stream[i%SMAX]));
         }
+        cudaDeviceSynchronize();
       }
       break;
     case 2:
@@ -91,6 +92,7 @@ void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, 
           HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
           HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice, stream[i%SMAX]));
         }
+      cudaDeviceSynchronize();
       break;  
   }
 }
@@ -104,6 +106,7 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
           HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost, stream[i%SMAX]));
           HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost, stream[i%SMAX]));
         }
+        cudaDeviceSynchronize();
       }
       break;
     case 2:
@@ -113,6 +116,7 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
         HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost, stream[i%SMAX]));
         HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost, stream[i%SMAX]));
       }
+      cudaDeviceSynchronize();
       break;  
   }
 }
@@ -146,10 +150,10 @@ __host__ void block_FW(int **Dist, int n, int B) {
   for (int r = 0; r < round; r++) {
     // Phase 1
     cal <<<grid, block, 0, stream[0]>>>(B, n, bst, dev_Dist, r, r, r, r, r);
+    cudaDeviceSynchronize();
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
   #pragma omp barrier
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
-      
     // Phase 2
     if (r > 0) {
       cal <<<grid, block, 0, stream[0]>>> (B, n, bst, dev_Dist, r, r, r, 0, r-1);
@@ -157,6 +161,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
     }
     cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
+    cudaDeviceSynchronize();
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2); 
   #pragma omp barrier
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2);
@@ -167,6 +172,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
       cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r+1, round-1, 0, r-1);
     }
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
+    cudaDeviceSynchronize();
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3); 
   #pragma omp barrier
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);
