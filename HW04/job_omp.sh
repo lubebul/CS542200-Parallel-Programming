@@ -17,4 +17,4 @@ cd $PBS_O_WORKDIR
 
 # Execute OpenMP version
 export OMP_NUM_THREADS=2
-./HW4_openmp.exe testcase/in5 out 64
+./HW4_openmp.exe testcase/in5 out_omp 64

@@ -16,4 +16,4 @@
 cd $PBS_O_WORKDIR
 
 # Execute MPI version
-mpirun ./HW4_mpi.exe testcase/in5 out 64
+mpirun -n 2 ./HW4_mpi.exe testcase/in5 out_mpi 64

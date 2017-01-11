@@ -8,11 +8,11 @@ NVFLAGS                 := -arch=sm_20 -O3 -D_FORCE_INLINES
 
 OMPFLAGS                := -fopenmp
 MPILIBS                 := -I/opt/mpich-3.2-gcc/include -L/opt/mpich-3.2-gcc/lib -lmpich
-EXES                    := block_FW seq_FW HW4_cuda HW4_openmp HW4_mpi
+EXES                    := block_FW.exe seq_FW.exe HW4_cuda.exe HW4_openmp.exe HW4_mpi.exe
 
 
-BASE = block_FW
-EXE = HW4_mpi
+BASE = block_FW.exe
+EXE = HW4_mpi.exe
 I = 3
 IN = testcase/in$(I)
 OUT = out
@@ -24,19 +24,19 @@ all: $(EXES)
 clean:
 	rm -f $(EXES) $(OUT) tmp*
 
-block_FW: block_FW.cpp
+block_FW.exe: block_FW.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $?
 
-seq_FW: seq_FW.cpp
+seq_FW.exe: seq_FW.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $?
 
-HW4_cuda: HW4_104062703_cuda.cu
+HW4_cuda.exe: HW4_104062703_cuda.cu
 	$(NVCC) $(NVFLAGS) -o $@ $?
 
-HW4_openmp: HW4_104062703_openmp.cu
+HW4_openmp.exe: HW4_104062703_openmp.cu
 	$(NVCC) $(NVFLAGS) -Xcompiler="$(OMPFLAGS)" -o $@ $?
 
-HW4_mpi: HW4_104062703_mpi.cu
+HW4_mpi.exe: HW4_104062703_mpi.cu
 	$(NVCC) $(NVFLAGS) $(MPILIBS) -o $@ $?
 run:
 	make $(EXE)

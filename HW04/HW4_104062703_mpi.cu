@@ -17,7 +17,7 @@ int ceil(int a, int b);
 
 int init_device();
 __global__ void cal(int B, int n, int bst, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed);
-__host__ void block_FW(int **Dist, int n, int B);
+__host__ void block_FW(int **Dist, int gid, int n, int B);
 void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, int B, int round, int phase);
 void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, int B, int round, int phase);
 
@@ -25,9 +25,11 @@ int n, m;
 int **Dist;
 
 int main(int argc, char* argv[]) {
+  int gid, size;
+  MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &gid);
   input(argv[1]);
   int B = atoi(argv[3]);
-  block_FW(Dist, n, B);
+  block_FW(Dist, gid, n, B);
   
   output(argv[2]);
 
@@ -117,12 +119,10 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
   }
 }
 
-__host__ void block_FW(int **Dist, int n, int B) {
+__host__ void block_FW(int **Dist, int gid, int n, int B) {
   // init GPU
   int gnum = init_device();
   printf("gpu num=%d\n", gnum);
-  int gid, size;
-  MPI_Init (&argc,&argv); MPI_Comm_size(MPI_COMM_WORLD, &size); MPI_Comm_rank(MPI_COMM_WORLD, &gid);
   
   cudaSetDevice(gid);  
   cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
@@ -172,7 +172,6 @@ __host__ void block_FW(int **Dist, int n, int B) {
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);
   }
   for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]); cudaFree(dev_Dist); free(tmp);
-}
 }
 __global__ void cal(int B, int n, int bst, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed) {
   int bx = bst+blockIdx.x; int by = blockIdx.y;
