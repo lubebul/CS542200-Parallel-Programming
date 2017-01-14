@@ -71,8 +71,8 @@ void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, 
     case 1:
       if (!(st <= t && t < ed)) {
         for(int i=t; i<min(t+B,n); i++) {
-          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
-          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpy(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
         }
         cudaDeviceSynchronize();
       }
@@ -81,8 +81,8 @@ void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, 
     case 3:
       for(int i=0; i<n; i++)
         if (i < st || i>=ed) {
-          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
-          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpy(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
         }
       cudaDeviceSynchronize();
       break;  
@@ -94,8 +94,8 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
     case 1:
       if (st <= t && t < ed) {
         for (int i=t; i<min(t+B, n); i++) {
-          HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
-          HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
+          HANDLE_ERROR(cudaMemcpy(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
+          HANDLE_ERROR(cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
         }
         cudaDeviceSynchronize();
       }
@@ -103,8 +103,8 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
     case 2:
     case 3:
       for (int i=st; i<ed; i++) {
-        HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
-        HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
+        HANDLE_ERROR(cudaMemcpy(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
+        HANDLE_ERROR(cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
       }
       cudaDeviceSynchronize();
       break;  
@@ -129,9 +129,9 @@ __host__ void block_FW(int **Dist, int n, int B) {
   HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
     HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
-    HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+    HANDLE_ERROR(cudaMemcpy(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
   }
-  HANDLE_ERROR(cudaMemcpyAsync(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
+  HANDLE_ERROR(cudaMemcpy(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
   cudaEventRecord(ted, 0); cudaEventSynchronize(ted); cudaEventElapsedTime(&t, tst, ted); cpy = t/1000.0;
   
   B = min(B, BSIZE); int round = ceil(n, B);

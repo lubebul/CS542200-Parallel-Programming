@@ -111,7 +111,7 @@ __host__ void block_FW(int n, int B) {
   cudaMemcpy(tmp, dev_Dist, sizeof(int *)*n, cudaMemcpyDeviceToHost);
   for(int i=0; i<n; i++) cudaMemcpy(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost);
   cudaEventRecord(ed, 0); cudaEventSynchronize(ed); cudaEventElapsedTime(&t, st, ed); tcpy += t/1000.0;
-  printf("%.3lf %.3lf, %.3lf\n", tcmp, tcomm, tcpy);
+  printf("%.3lf %.3lf %.3lf\n", tcmp, tcomm, tcpy);
   for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]);
   cudaFree(dev_Dist);
   free(tmp);
