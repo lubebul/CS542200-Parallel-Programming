@@ -8,7 +8,7 @@ NVFLAGS                 := -arch=sm_20 -O3
 
 OMPFLAGS                := -fopenmp
 MPILIBS                 := -I/opt/mpich-3.2-gcc/include -L/opt/mpich-3.2-gcc/lib -lmpich
-EXES                    := block_FW.exe seq_FW.exe HW4_cuda.exe HW4_openmp.exe HW4_mpi.exe HW4_openmp_noS.exe HW4_cuda_noS.exe
+EXES                    := block_FW.exe seq_FW.exe HW4_cuda.exe HW4_openmp.exe HW4_mpi.exe
 
 
 BASE = block_FW.exe
