@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 const int INF = 10000000;
 const int V = 10010;
@@ -15,12 +16,14 @@ static int Dist[V][V];
 
 int main(int argc, char* argv[])
 {
+    clock_t st, ed;
 	input(argv[1]);
 	int B = atoi(argv[3]);
+    st = clock();
 	block_FW(B);
-
+    ed = clock();
 	output(argv[2]);
-
+    printf("%.3f %.3f %.3f\n", (ed-st)/CLOCKS_PER_SEC, 0, 0);
 	return 0;
 }
 

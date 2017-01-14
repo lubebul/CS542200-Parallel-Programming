@@ -122,21 +122,9 @@ __global__ void cal(int B, int n, int **dev_Dist, int Round, int bx_st, int bx_e
   int a = bx*B+tx; int b = by*B+ty;
   // not in range
   if (!(bx_st*B<=a && a<min((bx_ed+1)*B,n)) || !(by_st*B<=b && b<min((by_ed+1)*B,n))) return;
-  // global -> shared
-  __shared__ int ab[BSIZE][BSIZE], ak[BSIZE][BSIZE], kb[BSIZE][BSIZE];
-  ab[tx][ty] = dev_Dist[a][b];
-  if (Round != by) for (int k = Round*B; k < min((Round+1)*B,n); k++) ak[tx][k%B] = dev_Dist[a][k];
-  if (Round != bx) for (int k = Round*B; k < min((Round+1)*B,n); k++) kb[k%B][ty] = dev_Dist[k][b];
-  __syncthreads();
-  int d1, d2;
 #pragma unroll
   for (int k = Round*B; k < min((Round+1)*B,n); k++) {
-    if (Round == by) d1 = ab[tx][k%B]; else d1 = ak[tx][k%B];
-    if (Round == bx) d2 = ab[k%B][ty]; else d2 = kb[k%B][ty];
-    atomicMin(&ab[tx][ty], d1+d2);
+    atomicMin(&dev_Dist[a][b], dev_Dist[a][k]+dev_Dist[k][b]);
     __syncthreads();
   }
-  // shared -> global
-  dev_Dist[a][b] = ab[tx][ty];
-  __syncthreads();
 }

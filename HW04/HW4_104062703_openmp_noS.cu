@@ -70,21 +70,19 @@ void copyFromHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, 
   switch(phase) {
     case 1:
       if (!(st <= t && t < ed)) {
-        cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
         for(int i=t; i<min(t+B,n); i++) {
-          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
-          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice, stream[i%SMAX]));
+          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
         }
         cudaDeviceSynchronize();
       }
       break;
     case 2:
     case 3:
-      cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
       for(int i=0; i<n; i++)
         if (i < st || i>=ed) {
-          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
-          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice, stream[i%SMAX]));
+          HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
+          HANDLE_ERROR(cudaMemcpyAsync(&dev_Dist[i], &tmp[i], sizeof(int *), cudaMemcpyHostToDevice));
         }
       cudaDeviceSynchronize();
       break;  
@@ -95,20 +93,18 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
   switch(phase) {
     case 1:
       if (st <= t && t < ed) {
-        cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
         for (int i=t; i<min(t+B, n); i++) {
-          HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost, stream[i%SMAX]));
-          HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost, stream[i%SMAX]));
+          HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
+          HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
         }
         cudaDeviceSynchronize();
       }
       break;
     case 2:
     case 3:
-      cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
       for (int i=st; i<ed; i++) {
-        HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost, stream[i%SMAX]));
-        HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost, stream[i%SMAX]));
+        HANDLE_ERROR(cudaMemcpyAsync(&tmp[i], &dev_Dist[i], sizeof(int *), cudaMemcpyDeviceToHost));
+        HANDLE_ERROR(cudaMemcpyAsync(Dist[i], tmp[i], sizeof(int)*n, cudaMemcpyDeviceToHost));
       }
       cudaDeviceSynchronize();
       break;  
@@ -123,7 +119,6 @@ __host__ void block_FW(int **Dist, int n, int B) {
 {
   int gid = omp_get_thread_num();
   cudaSetDevice(gid);  
-  cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
   // measure time
   cudaEvent_t tst, ted, cst, ced; float t;
   cudaEventCreate(&tst); cudaEventCreate(&ted); cudaEventCreate(&cst); cudaEventCreate(&ced);
@@ -134,7 +129,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
   HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
     HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
-    HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
+    HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice));
   }
   HANDLE_ERROR(cudaMemcpyAsync(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
   cudaEventRecord(ted, 0); cudaEventSynchronize(ted); cudaEventElapsedTime(&t, tst, ted); cpy = t/1000.0;
@@ -148,7 +143,7 @@ __host__ void block_FW(int **Dist, int n, int B) {
   for (int r = 0; r < round; r++) {
     // Phase 1
     cudaEventRecord(cst, 0);
-    cal <<<grid, block, 0, stream[0]>>>(B, n, bst, dev_Dist, r, r, r, r, r);
+    cal <<<grid, block>>>(B, n, bst, dev_Dist, r, r, r, r, r);
     cudaDeviceSynchronize();
     cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); cmp += t/1000.0;
     
@@ -162,11 +157,11 @@ __host__ void block_FW(int **Dist, int n, int B) {
     // Phase 2
     cudaEventRecord(cst, 0);
     if (r > 0) {
-      cal <<<grid, block, 0, stream[0]>>> (B, n, bst, dev_Dist, r, r, r, 0, r-1);
-      cal <<<grid, block, 0, stream[1]>>> (B, n, bst, dev_Dist, r, 0, r-1, r, r);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r, r, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, r, r);
     }
-    cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
-    cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
     cudaDeviceSynchronize(); cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); cmp += t/1000.0;
     cudaEventRecord(cst, 0);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2);
@@ -178,11 +173,11 @@ __host__ void block_FW(int **Dist, int n, int B) {
     // Phase 3
     cudaEventRecord(cst, 0);
     if (r > 0) {
-      cal <<<grid, block, 0, stream[0]>>> (B, n, bst, dev_Dist, r, 0, r-1, 0, r-1);
-      cal <<<grid, block, 0, stream[1]>>> (B, n, bst, dev_Dist, r, 0, r-1, r+1, round-1);
-      cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r+1, round-1, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, 0, r-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, 0, r-1, r+1, round-1);
+      cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, 0, r-1);
     }
-    cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
+    cal <<<grid, block>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
     cudaDeviceSynchronize(); cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); cmp += t/1000.0;
     cudaEventRecord(cst, 0);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);

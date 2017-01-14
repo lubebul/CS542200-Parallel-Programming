@@ -126,58 +126,77 @@ void copyToHost(int **Dist, int **dev_Dist, int **tmp, int n, int st, int ed, in
 __host__ void block_FW(int **Dist, int gid, int n, int B) {
   // init GPU
   int gnum = init_device();
-  printf("gpu num=%d\n", gnum);
-  
+  printf("%d\n", gnum);
   cudaSetDevice(gid);  
   cudaStream_t stream[SMAX]; for(int i=0; i<SMAX; i++) HANDLE_ERROR(cudaStreamCreate(&stream[i]));
+  // measure time
+  cudaEvent_t tst, ted, cst, ced; float t;
+  cudaEventCreate(&tst); cudaEventCreate(&ted); cudaEventCreate(&cst); cudaEventCreate(&ced);
+  float cmp, comm, cpy, tcpy; cmp = comm = cpy = tcpy = 0.0;
   // malloc device memory
   int **dev_Dist; int **tmp = (int **)malloc(sizeof(int *)*n);
+  cudaEventRecord(tst, 0);
   HANDLE_ERROR(cudaMalloc((void ***)&dev_Dist, sizeof(int *)*n));
   for(int i=0; i<n; i++) {
     HANDLE_ERROR(cudaMalloc((void **) &tmp[i], sizeof(int)*n));
     HANDLE_ERROR(cudaMemcpyAsync(tmp[i], Dist[i], sizeof(int)*n, cudaMemcpyHostToDevice, stream[i%SMAX]));
   }
   HANDLE_ERROR(cudaMemcpyAsync(dev_Dist, tmp, sizeof(int *)*n, cudaMemcpyHostToDevice));
+  cudaEventRecord(ted, 0); cudaEventSynchronize(ted); cudaEventElapsedTime(&t, tst, ted); cpy = t/1000.0;
   
-  B = min(B, BSIZE);
-  int round = ceil(n, B);
-  int gsize = ceil(round, gnum);
-  int psize = gsize*B;
+  B = min(B, BSIZE); int round = ceil(n, B);
+  int gsize = ceil(round, gnum); int psize = gsize*B;
   int bst = gid*gsize; int st = psize*gid; int ed = min(psize*(gid+1), n);
-  dim3 grid (gsize, round);
-  dim3 block (B, B, 1);
+  dim3 grid (gsize, round); dim3 block (B, B, 1);
   
+  cudaEventRecord(tst, 0);
   for (int r = 0; r < round; r++) {
     // Phase 1
+    cudaEventRecord(cst, 0);
     cal <<<grid, block, 0, stream[0]>>>(B, n, bst, dev_Dist, r, r, r, r, r);
-    cudaDeviceSynchronize();
+    cudaDeviceSynchronize(); cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); cmp += t/1000.0;
+    cudaEventRecord(cst, 0);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0;
     MPI_Barrier(MPI_COMM_WORLD);
+    cudaEventRecord(cst, 0);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 1);
-      
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0; 
     // Phase 2
+    cudaEventRecord(cst, 0);
     if (r > 0) {
       cal <<<grid, block, 0, stream[0]>>> (B, n, bst, dev_Dist, r, r, r, 0, r-1);
       cal <<<grid, block, 0, stream[1]>>> (B, n, bst, dev_Dist, r, 0, r-1, r, r);
     }
     cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r, r, r+1, round-1);
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r, r);
-    cudaDeviceSynchronize();
+    cudaDeviceSynchronize(); cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced);
+    cudaEventRecord(cst, 0);
     copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2);
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0;
     MPI_Barrier(MPI_COMM_WORLD);
+    cudaEventRecord(cst, 0);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 2);
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0;
     // Phase 3
+    cudaEventRecord(cst, 0);
     if (r > 0) {
       cal <<<grid, block, 0, stream[0]>>> (B, n, bst, dev_Dist, r, 0, r-1, 0, r-1);
       cal <<<grid, block, 0, stream[1]>>> (B, n, bst, dev_Dist, r, 0, r-1, r+1, round-1);
       cal <<<grid, block, 0, stream[2]>>> (B, n, bst, dev_Dist, r, r+1, round-1, 0, r-1);
     }
     cal <<<grid, block, 0, stream[3]>>> (B, n, bst, dev_Dist, r, r+1, round-1, r+1, round-1);
-    cudaDeviceSynchronize();
-    copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3); 
+    cudaDeviceSynchronize(); cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); cmp += t/1000.0;
+    cudaEventRecord(cst, 0);
+    copyToHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0;
     MPI_Barrier(MPI_COMM_WORLD);
+    cudaEventRecord(cst, 0);
     copyFromHost(Dist, dev_Dist, tmp, n, st, ed, B, r, 3);
+    cudaEventRecord(ced, 0); cudaEventSynchronize(ced); cudaEventElapsedTime(&t, cst, ced); tcpy += t/1000.0;
   }
+  cudaEventRecord(ted, 0); cudaEventSynchronize(ted); cudaEventElapsedTime(&t, tst, ted); comm += t/1000.0-cmp-tcpy; cpy += tcpy;
+  printf("%.3f %.3f %.3f\n", cmp, comm, cpy);
   for (int i=0; i<n; i++) cudaFree(&dev_Dist[i]); cudaFree(dev_Dist); free(tmp);
 }
 __global__ void cal(int B, int n, int bst, int **dev_Dist, int Round, int bx_st, int bx_ed, int by_st, int by_ed) {
