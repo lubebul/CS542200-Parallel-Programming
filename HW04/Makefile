@@ -4,7 +4,7 @@ CCFLAGS                 := -O3 -march=native -Wall -std=gnu11
 CXXFLAGS                := -O3 -march=native -Wall -std=c++0x
 
 NVCC                    := nvcc
-NVFLAGS                 := -arch=sm_20 -O3 -D_FORCE_INLINES
+NVFLAGS                 := -arch=sm_20 -O3
 
 OMPFLAGS                := -fopenmp
 MPILIBS                 := -I/opt/mpich-3.2-gcc/include -L/opt/mpich-3.2-gcc/lib -lmpich
