@@ -48,10 +48,10 @@ def run(name, exe, gn):
         f.write(cts)
     os.system('rm CUDA_* *.out *.sh')
 
-NAME = ['HW4_cuda.exe', 'HW4_openmp.exe', 'HW4_mpi.exe', 'HW4_cuda_noS.exe', 'HW4_openmp_noS.exe']
-EXEs = ['./{} {} {} {}', 'mpirun ./{} {} {} {}']
-PEXE = [EXEs[0], EXEs[0], EXEs[1], EXEs[0], EXEs[0]]
-PG = [1,2,2,1,2]
+NAME = ['HW4_cuda.exe', 'HW4_openmp.exe', 'HW4_mpi.exe']
+EXEs = ['./{} {} {} {}', 'mpirun ./{} {} {} {}', 'nvprof --metrics flops_sp --metrics flops_sp_add --metrics flops_sp_mul --metrics flops_sp_fma {} {} {} {}']
+PEXE = [EXEs[0], EXEs[0], EXEs[1]]
+PG = [1,2,2]
 
 os.system('make')
 for i in range(5):
